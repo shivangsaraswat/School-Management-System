@@ -145,18 +145,18 @@ export default function StudentsPage() {
                                         </td>
                                         <td className="py-3 px-4 md:px-5">
                                             {cls.sections.length === 1 ? (
-                                                <span className="inline-flex items-center justify-center h-8 px-3 rounded text-xs md:text-sm bg-primary/10 text-primary font-medium">
+                                                <span className="inline-flex items-center justify-center h-8 px-4 rounded-full text-xs md:text-sm bg-primary/10 text-primary font-medium">
                                                     Section {cls.sections[0]}
                                                 </span>
                                             ) : (
-                                                <div className="inline-flex rounded border bg-muted/50 p-0.5">
+                                                <div className="inline-flex items-center rounded-full border bg-muted/40 p-1">
                                                     {cls.sections.map((section) => (
                                                         <button
                                                             key={section}
                                                             onClick={() => handleSectionChange(cls.id, section)}
-                                                            className={`px-3 md:px-4 py-1.5 rounded text-xs md:text-sm font-medium transition-all ${selectedSections[cls.id] === section
-                                                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                                                    : "text-muted-foreground hover:text-foreground"
+                                                            className={`min-w-[2.5rem] px-3 py-1 rounded-full text-xs md:text-sm font-medium transition-all duration-200 ${selectedSections[cls.id] === section
+                                                                ? "bg-primary text-primary-foreground shadow-sm"
+                                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                                                 }`}
                                                         >
                                                             {section}
