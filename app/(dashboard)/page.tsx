@@ -90,33 +90,81 @@ export default async function DashboardPage() {
             </div>
 
             {/* Stats Grid */}
-            <div className={`grid gap-3 md:gap-4 grid-cols-2 ${visibleStats.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-                {visibleStats.map((stat) => {
-                    const Icon = stat.icon;
-                    const TrendIcon = stat.trend === "up" ? TrendingUp : TrendingDown;
-                    return (
-                        <Card key={stat.title}>
-                            <CardContent className="p-4 md:p-5">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs md:text-sm font-medium text-muted-foreground">
-                                        {stat.title}
-                                    </span>
-                                    <Icon className="h-4 w-4 text-muted-foreground" />
+            <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
+                {/* Total Students - Hero Card (Gradient from Image) */}
+                <Card className="relative overflow-hidden border-none bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg transition-all hover:-translate-y-1">
+                    <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px] opacity-30" />
+                    <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs md:text-sm font-medium text-orange-50">Total Students</span>
+                            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+                                <Users className="h-4 w-4 text-white" />
+                            </div>
+                        </div>
+                        <div className="text-2xl md:text-3xl font-bold mt-3">2,847</div>
+                        <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-orange-50">
+                            <TrendingUp className="h-4 w-4" />
+                            <span className="font-medium">+12% from last month</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Teachers - White Card with Emerald Accents */}
+                <Card className="relative overflow-hidden border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
+                    <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs md:text-sm font-medium text-muted-foreground">Total Teachers</span>
+                            <div className="p-2 bg-emerald-100 rounded-lg">
+                                <GraduationCap className="h-4 w-4 text-emerald-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl md:text-3xl font-bold mt-3 text-emerald-600">94</div>
+                        <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-emerald-600 font-medium">
+                            <TrendingUp className="h-4 w-4" />
+                            <span>+3 new recruited</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Fee Collection - White Card with Violet Accents */}
+                {canViewRevenue(user.role) && (
+                    <Card className="relative overflow-hidden border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50" />
+                        <CardContent className="p-4 md:p-5 relative z-10">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs md:text-sm font-medium text-muted-foreground">Fee Collection</span>
+                                <div className="p-2 bg-violet-100 rounded-lg">
+                                    <Receipt className="h-4 w-4 text-violet-600" />
                                 </div>
-                                <div className="text-xl md:text-2xl font-bold mt-1">{stat.value}</div>
-                                <div className="flex items-center gap-1 text-xs md:text-sm mt-1">
-                                    <TrendIcon
-                                        className={`h-3.5 w-3.5 ${stat.trend === "up" ? "text-green-500" : "text-red-500"}`}
-                                    />
-                                    <span className={stat.trend === "up" ? "text-green-500" : "text-red-500"}>
-                                        {stat.change}
-                                    </span>
-                                    <span className="text-muted-foreground hidden sm:inline">from last month</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
+                            </div>
+                            <div className="text-2xl md:text-3xl font-bold mt-3 text-violet-600">₹24.5L</div>
+                            <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-violet-600 font-medium">
+                                <TrendingUp className="h-4 w-4" />
+                                <span>+18% from last month</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Attendance - White Card with Rose Accents */}
+                <Card className="relative overflow-hidden border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
+                    <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs md:text-sm font-medium text-muted-foreground">Attendance Today</span>
+                            <div className="p-2 bg-rose-100 rounded-lg">
+                                <ClipboardCheck className="h-4 w-4 text-rose-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl md:text-3xl font-bold mt-3 text-rose-600">94.2%</div>
+                        <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-rose-600 font-medium">
+                            <TrendingDown className="h-4 w-4" />
+                            <span>-2.1% from last month</span>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Quick Actions */}

@@ -47,6 +47,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
         label: "Administration",
         checkAccess: canAccessSuperAdmin,
         items: [
+            { title: "User Accounts", url: "/admin/users", icon: Users },
             { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
             { title: "Revenue", url: "/admin/revenue", icon: BarChart3 },
             { title: "Settings", url: "/admin/settings", icon: Settings },

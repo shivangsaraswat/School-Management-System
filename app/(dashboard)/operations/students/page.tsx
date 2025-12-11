@@ -78,8 +78,10 @@ export default function StudentsPage() {
 
             {/* Stats Overview */}
             <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <CardContent className="p-4 md:p-5">
+                <Card className="relative overflow-hidden border-none bg-gradient-to-br from-rose-500 via-red-500 to-orange-500 text-white shadow-md">
+                    <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px] opacity-50" />
+                    <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
                         <div className="text-xs md:text-sm font-medium opacity-90">Total Students</div>
                         <div className="text-2xl md:text-3xl font-bold mt-1">{totalStudents.toLocaleString()}</div>
                         <div className="flex items-center gap-1 text-xs md:text-sm opacity-80 mt-0.5">
@@ -88,26 +90,29 @@ export default function StudentsPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardContent className="p-4 md:p-5">
+                <Card className="relative overflow-hidden border shadow-sm">
+                    <div className="absolute inset-0 bg-[radial-gradient(#00000008_1px,transparent_1px)] [background-size:16px_16px]" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
                         <div className="text-xs md:text-sm font-medium text-muted-foreground">Total Classes</div>
-                        <div className="text-xl md:text-2xl font-bold mt-1">{allClasses.length}</div>
+                        <div className="text-xl md:text-2xl font-bold mt-1 text-foreground">{allClasses.length}</div>
                         <div className="text-xs md:text-sm text-muted-foreground">Nursery to Class 12</div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardContent className="p-4 md:p-5">
+                <Card className="relative overflow-hidden border shadow-sm">
+                    <div className="absolute inset-0 bg-[radial-gradient(#00000008_1px,transparent_1px)] [background-size:16px_16px]" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
                         <div className="text-xs md:text-sm font-medium text-muted-foreground">Total Sections</div>
-                        <div className="text-xl md:text-2xl font-bold mt-1">
+                        <div className="text-xl md:text-2xl font-bold mt-1 text-foreground">
                             {allClasses.reduce((acc, cls) => acc + cls.sections.length, 0)}
                         </div>
                         <div className="text-xs md:text-sm text-muted-foreground">Across all classes</div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardContent className="p-4 md:p-5">
+                <Card className="relative overflow-hidden border shadow-sm">
+                    <div className="absolute inset-0 bg-[radial-gradient(#00000008_1px,transparent_1px)] [background-size:16px_16px]" />
+                    <CardContent className="p-4 md:p-5 relative z-10">
                         <div className="text-xs md:text-sm font-medium text-muted-foreground">Avg. per Section</div>
-                        <div className="text-xl md:text-2xl font-bold mt-1">
+                        <div className="text-xl md:text-2xl font-bold mt-1 text-foreground">
                             {Math.round(totalStudents / allClasses.reduce((acc, cls) => acc + cls.sections.length, 0))}
                         </div>
                         <div className="text-xs md:text-sm text-muted-foreground">Students</div>
