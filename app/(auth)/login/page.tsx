@@ -6,22 +6,17 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address"),
     password: z.string().min(1, "Password is required"),
+    remember: z.boolean().optional(),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -30,7 +25,6 @@ export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get("callbackUrl") || "/";
-    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const {
@@ -42,6 +36,7 @@ export default function LoginPage() {
         defaultValues: {
             email: "",
             password: "",
+            remember: false,
         },
     });
 
@@ -71,78 +66,105 @@ export default function LoginPage() {
     };
 
     return (
-        <Card className="w-full max-w-md shadow-xl">
-            <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-bold tracking-tight">
-                    Sign In
-                </CardTitle>
-                <CardDescription>
-                    Enter your credentials to access the dashboard
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+        <div className="w-full">
+            <div className="flex flex-col space-y-4 mb-10">
+                <h1 className="text-[32px] font-bold text-[#0f172a] leading-tight">
+                    Log in to the Admin
+                    <br />
+                    Dashboard
+                </h1>
+                <p className="text-[#64748b] text-base">
+                    Sign in with your credentials to access the dashboard
+                </p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-4">
+                    {/* Email Input */}
+                    <div className="relative group">
+                        <div className="absolute top-3 left-4 text-[11px] font-medium text-[#64748b] z-10 transition-all duration-200">
+                            Email address
+                        </div>
                         <Input
                             id="email"
-                            type="email"
                             placeholder="admin@school.com"
+                            type="email"
                             autoComplete="email"
                             disabled={isLoading}
+                            className="h-[68px] pt-7 pb-2 px-4 bg-[#f8fafc] border-transparent focus:bg-white focus:ring-0 focus:border-[#e2e8f0] rounded-2xl text-[15px] font-medium text-[#0f172a] placeholder:text-muted-foreground/50 transition-all shadow-none"
                             {...register("email")}
                         />
                         {errors.email && (
-                            <p className="text-sm text-destructive">{errors.email.message}</p>
+                            <p className="border-l-2 border-destructive pl-2 mt-2 text-sm text-destructive font-medium">
+                                {errors.email.message}
+                            </p>
                         )}
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <div className="relative">
-                            <Input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                autoComplete="current-password"
-                                disabled={isLoading}
-                                className="pr-10"
-                                {...register("password")}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                                onClick={() => setShowPassword(!showPassword)}
-                                disabled={isLoading}
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <span className="sr-only">
-                                    {showPassword ? "Hide password" : "Show password"}
-                                </span>
-                            </Button>
+
+                    {/* Password Input */}
+                    <div className="relative group">
+                        <div className="absolute top-3 left-4 text-[11px] font-medium text-[#64748b] z-10 transition-all duration-200">
+                            Password
                         </div>
+                        <Input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                            disabled={isLoading}
+                            className="h-[68px] pt-7 pb-2 px-4 bg-[#f8fafc] border-transparent focus:bg-white focus:ring-0 focus:border-[#e2e8f0] rounded-2xl text-[15px] font-medium text-[#0f172a] placeholder:text-muted-foreground/50 transition-all shadow-none"
+                            {...register("password")}
+                        />
                         {errors.password && (
-                            <p className="text-sm text-destructive">
+                            <p className="border-l-2 border-destructive pl-2 mt-2 text-sm text-destructive font-medium">
                                 {errors.password.message}
                             </p>
                         )}
                     </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isLoading ? "Signing in..." : "Sign In"}
-                    </Button>
-                </form>
-
-                <div className="mt-6 rounded-lg bg-muted/50 p-4">
-                    <p className="text-xs text-muted-foreground mb-2">Demo Credentials:</p>
-                    <p className="text-xs font-mono">admin@school.com / admin123</p>
                 </div>
-            </CardContent>
-        </Card>
+
+                <div className="flex items-center space-x-3">
+                    <input
+                        type="checkbox"
+                        id="remember"
+                        className="h-5 w-5 rounded-md border-2 border-gray-300 text-primary focus:ring-primary/20 transition-colors cursor-pointer"
+                        {...register("remember")}
+                    />
+                    <label
+                        htmlFor="remember"
+                        className="text-[14px] font-medium text-[#475569] leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer transition-all duration-200"
+                    >
+                        Remember this computer
+                    </label>
+                </div>
+
+                <div className="pt-2 space-y-6">
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full h-14 rounded-2xl text-[16px] font-semibold bg-[#eb5a62] hover:bg-[#d6454d] text-white shadow-lg shadow-[#eb5a62]/20 transition-all"
+                    >
+                        {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                        {isLoading ? "Logging In..." : "Log In"}
+                    </Button>
+
+                    <div className="text-left">
+                        <Link
+                            href="#"
+                            className="text-[14px] font-medium text-[#eb5a62] underline underline-offset-4 decoration-[#eb5a62]/30 hover:decoration-[#eb5a62] transition-all"
+                        >
+                            Unable to login?
+                        </Link>
+                    </div>
+                </div>
+            </form>
+            <div className="mt-10 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Demo Credentials</p>
+                <div className="flex flex-col gap-1">
+                    <code className="text-sm text-gray-700 bg-white px-2 py-1 rounded border border-gray-200 w-fit">admin@school.com</code>
+                    <code className="text-sm text-gray-700 bg-white px-2 py-1 rounded border border-gray-200 w-fit">admin123</code>
+                </div>
+            </div>
+        </div>
     );
 }

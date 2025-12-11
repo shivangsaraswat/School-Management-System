@@ -12,10 +12,10 @@ export default async function DashboardLayout({
 
     return (
         <SidebarProvider>
-            <AppSidebar userRole={user.role} />
+            <AppSidebar userRole={user.role} variant="inset" />
             <SidebarInset>
                 <Header user={user} />
-                <main className="flex flex-1 flex-col gap-4 p-4 pt-6">
+                <main className="flex flex-1 flex-col gap-6 p-6 pt-0">
                     {children}
                 </main>
             </SidebarInset>

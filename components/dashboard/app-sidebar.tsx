@@ -137,10 +137,15 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                     const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
                                     return (
                                         <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={isActive}
+                                                tooltip={item.title}
+                                                className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-gray-100"
+                                            >
                                                 <Link href={item.url}>
                                                     <item.icon className="size-4" />
-                                                    <span className="text-sm">{item.title}</span>
+                                                    <span className="text-sm font-medium">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>

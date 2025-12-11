@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 
 export default function AuthLayout({
     children,
@@ -6,17 +6,26 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-muted/50 p-4">
-            <div className="mb-8 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg">
-                    <GraduationCap className="h-7 w-7 text-primary-foreground" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">School Management</h1>
-                    <p className="text-sm text-muted-foreground">System</p>
+        <div className="flex min-h-screen w-full">
+            {/* Left Side - Image */}
+            <div className="hidden lg:block lg:w-[45%] relative bg-[#f8fafc]">
+                <div className="absolute inset-0 flex items-end justify-start overflow-hidden">
+                    <Image
+                        src="/assets/login-visual.png"
+                        alt="Authentication background"
+                        fill
+                        className="object-cover object-center"
+                        priority
+                    />
                 </div>
             </div>
-            {children}
+
+            {/* Right Side - Form */}
+            <div className="flex w-full lg:w-[55%] items-center justify-center bg-white p-8">
+                <div className="w-full max-w-[440px]">
+                    {children}
+                </div>
+            </div>
         </div>
     );
 }
