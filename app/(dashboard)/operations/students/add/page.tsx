@@ -19,6 +19,13 @@ import {
     Save,
     Loader2,
 } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 const classes = [
@@ -76,10 +83,15 @@ export default function AddStudentPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
+        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         toast.success("Student added successfully!", {
@@ -91,9 +103,9 @@ export default function AddStudentPage() {
     };
 
     return (
-        <div className="space-y-4 md:space-y-6 animate-fade-in max-w-4xl mx-auto">
+        <div className="space-y-6 animate-fade-in w-full pb-10">
             {/* Header */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4 max-w-3xl mx-auto">
                 <Link
                     href="/operations/students"
                     className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-fit text-sm"
@@ -102,96 +114,95 @@ export default function AddStudentPage() {
                     Back to Students
                 </Link>
                 <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <UserPlus className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                    <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+                        <UserPlus className="h-6 w-6 text-primary" />
                         Add New Student
                     </h1>
-                    <p className="text-muted-foreground text-sm md:text-base">
+                    <p className="text-muted-foreground text-sm">
                         Fill in the details to enroll a new student
                     </p>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto">
                 {/* Personal Information */}
                 <Card>
-                    <CardHeader className="py-4 md:py-5 px-4 md:px-6">
-                        <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
-                            <User className="h-4 w-4 md:h-5 md:w-5" />
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <User className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                             Personal Information
                         </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">Basic details about the student</CardDescription>
+                        <CardDescription>Basic details about the student</CardDescription>
                     </CardHeader>
-                    <CardContent className="px-4 md:px-6 pb-4 md:pb-6 pt-0 grid gap-4 md:grid-cols-2">
+                    <CardContent className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName" className="text-sm">First Name *</Label>
+                            <Label htmlFor="firstName">First Name <span className="text-destructive">*</span></Label>
                             <Input
                                 id="firstName"
                                 name="firstName"
                                 value={formData.firstName}
                                 onChange={handleChange}
                                 placeholder="Enter first name"
-                                className="h-9 md:h-10 text-sm"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName" className="text-sm">Last Name *</Label>
+                            <Label htmlFor="lastName">Last Name <span className="text-destructive">*</span></Label>
                             <Input
                                 id="lastName"
                                 name="lastName"
                                 value={formData.lastName}
                                 onChange={handleChange}
                                 placeholder="Enter last name"
-                                className="h-9 md:h-10 text-sm"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="dateOfBirth" className="text-sm">Date of Birth *</Label>
+                            <Label htmlFor="dateOfBirth">Date of Birth <span className="text-destructive">*</span></Label>
                             <Input
                                 id="dateOfBirth"
                                 name="dateOfBirth"
                                 type="date"
                                 value={formData.dateOfBirth}
                                 onChange={handleChange}
-                                className="h-9 md:h-10 text-sm"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="gender" className="text-sm">Gender *</Label>
-                            <select
-                                id="gender"
-                                name="gender"
+                            <Label htmlFor="gender">Gender <span className="text-destructive">*</span></Label>
+                            <Select
                                 value={formData.gender}
-                                onChange={handleChange}
-                                className="w-full h-9 md:h-10 px-3 rounded-md border border-input bg-background text-sm"
+                                onValueChange={(val) => handleSelectChange("gender", val)}
                                 required
                             >
-                                <option value="">Select gender</option>
-                                {genders.map(g => (
-                                    <option key={g} value={g}>{g}</option>
-                                ))}
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select gender" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {genders.map(g => (
+                                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="bloodGroup" className="text-sm">Blood Group</Label>
-                            <select
-                                id="bloodGroup"
-                                name="bloodGroup"
+                            <Label htmlFor="bloodGroup">Blood Group</Label>
+                            <Select
                                 value={formData.bloodGroup}
-                                onChange={handleChange}
-                                className="w-full h-9 md:h-10 px-3 rounded-md border border-input bg-background text-sm"
+                                onValueChange={(val) => handleSelectChange("bloodGroup", val)}
                             >
-                                <option value="">Select blood group</option>
-                                {bloodGroups.map(bg => (
-                                    <option key={bg} value={bg}>{bg}</option>
-                                ))}
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select blood group" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {bloodGroups.map(bg => (
+                                        <SelectItem key={bg} value={bg}>{bg}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="phone" className="text-sm">Phone Number</Label>
+                            <Label htmlFor="phone">Phone Number</Label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -200,12 +211,12 @@ export default function AddStudentPage() {
                                     value={formData.phone}
                                     onChange={handleChange}
                                     placeholder="+91 98765 43210"
-                                    className="pl-10 h-9 md:h-10 text-sm"
+                                    className="pl-10"
                                 />
                             </div>
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="email" className="text-sm">Email</Label>
+                            <Label htmlFor="email">Email</Label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -215,7 +226,7 @@ export default function AddStudentPage() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     placeholder="student@email.com"
-                                    className="pl-10 h-9 md:h-10 text-sm"
+                                    className="pl-10"
                                 />
                             </div>
                         </div>
@@ -224,56 +235,52 @@ export default function AddStudentPage() {
 
                 {/* Address */}
                 <Card>
-                    <CardHeader className="py-4 md:py-5 px-4 md:px-6">
-                        <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
-                            <MapPin className="h-4 w-4 md:h-5 md:w-5" />
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <MapPin className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                             Address
                         </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">Student&apos;s residential address</CardDescription>
+                        <CardDescription>Student&apos;s residential address</CardDescription>
                     </CardHeader>
-                    <CardContent className="px-4 md:px-6 pb-4 md:pb-6 pt-0 grid gap-4 md:grid-cols-2">
+                    <CardContent className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="address" className="text-sm">Street Address</Label>
+                            <Label htmlFor="address">Street Address</Label>
                             <Input
                                 id="address"
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
                                 placeholder="House no, Street name, Area"
-                                className="h-9 md:h-10 text-sm"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="city" className="text-sm">City</Label>
+                            <Label htmlFor="city">City</Label>
                             <Input
                                 id="city"
                                 name="city"
                                 value={formData.city}
                                 onChange={handleChange}
                                 placeholder="City"
-                                className="h-9 md:h-10 text-sm"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="state" className="text-sm">State</Label>
+                            <Label htmlFor="state">State</Label>
                             <Input
                                 id="state"
                                 name="state"
                                 value={formData.state}
                                 onChange={handleChange}
                                 placeholder="State"
-                                className="h-9 md:h-10 text-sm"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="pincode" className="text-sm">Pincode</Label>
+                            <Label htmlFor="pincode">Pincode</Label>
                             <Input
                                 id="pincode"
                                 name="pincode"
                                 value={formData.pincode}
                                 onChange={handleChange}
                                 placeholder="110001"
-                                className="h-9 md:h-10 text-sm"
                             />
                         </div>
                     </CardContent>
@@ -281,55 +288,56 @@ export default function AddStudentPage() {
 
                 {/* Academic Information */}
                 <Card>
-                    <CardHeader className="py-4 md:py-5 px-4 md:px-6">
-                        <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
-                            <GraduationCap className="h-4 w-4 md:h-5 md:w-5" />
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <GraduationCap className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                             Academic Information
                         </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">Class and admission details</CardDescription>
+                        <CardDescription>Class and admission details</CardDescription>
                     </CardHeader>
-                    <CardContent className="px-4 md:px-6 pb-4 md:pb-6 pt-0 grid gap-4 md:grid-cols-3">
+                    <CardContent className="grid gap-6 md:grid-cols-3">
                         <div className="space-y-2">
-                            <Label htmlFor="className" className="text-sm">Class *</Label>
-                            <select
-                                id="className"
-                                name="className"
+                            <Label htmlFor="className">Class <span className="text-destructive">*</span></Label>
+                            <Select
                                 value={formData.className}
-                                onChange={handleChange}
-                                className="w-full h-9 md:h-10 px-3 rounded-md border border-input bg-background text-sm"
+                                onValueChange={(val) => handleSelectChange("className", val)}
                                 required
                             >
-                                <option value="">Select class</option>
-                                {classes.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select class" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {classes.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="section" className="text-sm">Section *</Label>
-                            <select
-                                id="section"
-                                name="section"
+                            <Label htmlFor="section">Section <span className="text-destructive">*</span></Label>
+                            <Select
                                 value={formData.section}
-                                onChange={handleChange}
-                                className="w-full h-9 md:h-10 px-3 rounded-md border border-input bg-background text-sm"
+                                onValueChange={(val) => handleSelectChange("section", val)}
                                 required
                             >
-                                <option value="">Select section</option>
-                                {sections.map(s => (
-                                    <option key={s} value={s}>Section {s}</option>
-                                ))}
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select section" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {sections.map(s => (
+                                        <SelectItem key={s} value={s}>Section {s}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="admissionDate" className="text-sm">Admission Date *</Label>
+                            <Label htmlFor="admissionDate">Admission Date <span className="text-destructive">*</span></Label>
                             <Input
                                 id="admissionDate"
                                 name="admissionDate"
                                 type="date"
                                 value={formData.admissionDate}
                                 onChange={handleChange}
-                                className="h-9 md:h-10 text-sm"
                                 required
                             />
                         </div>
@@ -338,44 +346,44 @@ export default function AddStudentPage() {
 
                 {/* Guardian Information */}
                 <Card>
-                    <CardHeader className="py-4 md:py-5 px-4 md:px-6">
-                        <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
-                            <Users className="h-4 w-4 md:h-5 md:w-5" />
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Users className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                             Guardian Information
                         </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">Parent or guardian contact details</CardDescription>
+                        <CardDescription>Parent or guardian contact details</CardDescription>
                     </CardHeader>
-                    <CardContent className="px-4 md:px-6 pb-4 md:pb-6 pt-0 grid gap-4 md:grid-cols-2">
+                    <CardContent className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="guardianName" className="text-sm">Guardian Name *</Label>
+                            <Label htmlFor="guardianName">Guardian Name <span className="text-destructive">*</span></Label>
                             <Input
                                 id="guardianName"
                                 name="guardianName"
                                 value={formData.guardianName}
                                 onChange={handleChange}
                                 placeholder="Full name"
-                                className="h-9 md:h-10 text-sm"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="guardianRelation" className="text-sm">Relation *</Label>
-                            <select
-                                id="guardianRelation"
-                                name="guardianRelation"
+                            <Label htmlFor="guardianRelation">Relation <span className="text-destructive">*</span></Label>
+                            <Select
                                 value={formData.guardianRelation}
-                                onChange={handleChange}
-                                className="w-full h-9 md:h-10 px-3 rounded-md border border-input bg-background text-sm"
+                                onValueChange={(val) => handleSelectChange("guardianRelation", val)}
                                 required
                             >
-                                <option value="">Select relation</option>
-                                <option value="Father">Father</option>
-                                <option value="Mother">Mother</option>
-                                <option value="Guardian">Guardian</option>
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select relation" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Father">Father</SelectItem>
+                                    <SelectItem value="Mother">Mother</SelectItem>
+                                    <SelectItem value="Guardian">Guardian</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="guardianPhone" className="text-sm">Guardian Phone *</Label>
+                            <Label htmlFor="guardianPhone">Guardian Phone <span className="text-destructive">*</span></Label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -384,13 +392,13 @@ export default function AddStudentPage() {
                                     value={formData.guardianPhone}
                                     onChange={handleChange}
                                     placeholder="+91 98765 43210"
-                                    className="pl-10 h-9 md:h-10 text-sm"
+                                    className="pl-10"
                                     required
                                 />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="guardianEmail" className="text-sm">Guardian Email</Label>
+                            <Label htmlFor="guardianEmail">Guardian Email</Label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -400,39 +408,38 @@ export default function AddStudentPage() {
                                     value={formData.guardianEmail}
                                     onChange={handleChange}
                                     placeholder="guardian@email.com"
-                                    className="pl-10 h-9 md:h-10 text-sm"
+                                    className="pl-10"
                                 />
                             </div>
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="guardianOccupation" className="text-sm">Occupation</Label>
+                            <Label htmlFor="guardianOccupation">Occupation</Label>
                             <Input
                                 id="guardianOccupation"
                                 name="guardianOccupation"
                                 value={formData.guardianOccupation}
                                 onChange={handleChange}
                                 placeholder="e.g., Business, Government Service, etc."
-                                className="h-9 md:h-10 text-sm"
                             />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Submit Button */}
-                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-                    <Button type="button" variant="outline" asChild className="h-9 md:h-10 text-sm">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+                    <Button type="button" variant="outline" asChild size="lg">
                         <Link href="/operations/students">Cancel</Link>
                     </Button>
-                    <Button type="submit" disabled={isSubmitting} className="gap-2 h-9 md:h-10 text-sm">
+                    <Button type="submit" disabled={isSubmitting} size="lg" className="min-w-[150px]">
                         {isSubmitting ? (
                             <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Adding Student...
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Saving...
                             </>
                         ) : (
                             <>
-                                <Save className="h-4 w-4" />
-                                Add Student
+                                <Save className="h-4 w-4 mr-2" />
+                                Enroll Student
                             </>
                         )}
                     </Button>
