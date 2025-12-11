@@ -51,8 +51,8 @@ export default async function MyClassesPage() {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                    <BookOpen className="h-8 w-8 text-primary" />
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     My Classes
                 </h1>
                 <p className="text-muted-foreground">
@@ -120,12 +120,12 @@ export default async function MyClassesPage() {
                                 <div className="flex items-center gap-3">
                                     <div
                                         className={`flex h-8 w-8 items-center justify-center rounded-full font-bold text-sm ${index === 0
-                                                ? "bg-yellow-500 text-white"
-                                                : index === 1
-                                                    ? "bg-gray-400 text-white"
-                                                    : index === 2
-                                                        ? "bg-amber-700 text-white"
-                                                        : "bg-muted text-muted-foreground"
+                                            ? "bg-yellow-500 text-white"
+                                            : index === 1
+                                                ? "bg-gray-400 text-white"
+                                                : index === 2
+                                                    ? "bg-amber-700 text-white"
+                                                    : "bg-muted text-muted-foreground"
                                             }`}
                                     >
                                         {index + 1}

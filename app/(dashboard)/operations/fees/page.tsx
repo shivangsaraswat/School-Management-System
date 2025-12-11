@@ -58,8 +58,8 @@ export default async function FeesPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <Receipt className="h-8 w-8 text-primary" />
+                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
+                        <Receipt className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                         Fee Management
                     </h1>
                     <p className="text-muted-foreground">

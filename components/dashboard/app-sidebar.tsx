@@ -118,7 +118,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                 </div>
                                 <div className="grid flex-1 text-left leading-tight">
                                     <span className="truncate text-sm font-semibold">
-                                        {userRole === ROLES.STUDENT ? "Student Portal" : "School System"}
+                                        {userRole === ROLES.STUDENT ? "Student Portal" : "Ptbs School"}
                                     </span>
                                     <span className="truncate text-xs text-muted-foreground capitalize">{userRole.replace("_", " ")}</span>
                                 </div>

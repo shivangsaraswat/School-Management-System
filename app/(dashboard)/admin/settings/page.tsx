@@ -12,8 +12,8 @@ export default function SettingsPage() {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                    <Settings className="h-8 w-8 text-primary" />
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
+                    <Settings className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     Global Settings
                 </h1>
                 <p className="text-muted-foreground">

@@ -50,8 +50,8 @@ export default async function RevenuePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <BarChart3 className="h-8 w-8 text-primary" />
+                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                         Revenue Dashboard
                     </h1>
                     <p className="text-muted-foreground">
@@ -139,10 +139,10 @@ export default async function RevenuePage() {
                                     <div className="h-2 rounded-full bg-muted overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all ${item.collected >= 90
-                                                    ? "bg-green-500"
-                                                    : item.collected >= 80
-                                                        ? "bg-yellow-500"
-                                                        : "bg-orange-500"
+                                                ? "bg-green-500"
+                                                : item.collected >= 80
+                                                    ? "bg-yellow-500"
+                                                    : "bg-orange-500"
                                                 }`}
                                             style={{ width: `${item.collected}%` }}
                                         />

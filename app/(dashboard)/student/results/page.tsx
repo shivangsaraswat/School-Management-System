@@ -52,8 +52,8 @@ export default async function StudentResultsPage() {
             {/* Student Info Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <Award className="h-8 w-8 text-primary" />
+                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
+                        <Award className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                         My Results
                     </h1>
                     <p className="text-muted-foreground mt-1">
@@ -177,10 +177,10 @@ export default async function StudentResultsPage() {
                                             </td>
                                             <td className="text-center py-3 px-2">
                                                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${subject.grade.startsWith("A")
-                                                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                                        : subject.grade.startsWith("B")
-                                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                                    : subject.grade.startsWith("B")
+                                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                                                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
                                                     }`}>
                                                     {subject.grade}
                                                 </span>
