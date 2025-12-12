@@ -33,7 +33,7 @@ export default function RootLayout({
                     >
                         <TooltipProvider delayDuration={0}>
                             {children}
-                            <Toaster richColors position="top-right" />
+                            <Toaster position="top-right" />
                         </TooltipProvider>
                     </ThemeProvider>
                 </SessionProvider>

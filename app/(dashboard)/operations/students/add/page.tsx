@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,40 +27,48 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { createStudent } from "@/lib/actions/students";
 
 const classes = [
-    { id: "nursery", name: "Nursery" },
-    { id: "lkg", name: "LKG" },
-    { id: "ukg", name: "UKG" },
-    { id: "1", name: "Class 1" },
-    { id: "2", name: "Class 2" },
-    { id: "3", name: "Class 3" },
-    { id: "4", name: "Class 4" },
-    { id: "5", name: "Class 5" },
-    { id: "6", name: "Class 6" },
-    { id: "7", name: "Class 7" },
-    { id: "8", name: "Class 8" },
-    { id: "9", name: "Class 9" },
-    { id: "10", name: "Class 10" },
-    { id: "11", name: "Class 11" },
-    { id: "12", name: "Class 12" },
+    { id: "Nursery", name: "Nursery" },
+    { id: "LKG", name: "LKG" },
+    { id: "UKG", name: "UKG" },
+    { id: "Class 1", name: "Class 1" },
+    { id: "Class 2", name: "Class 2" },
+    { id: "Class 3", name: "Class 3" },
+    { id: "Class 4", name: "Class 4" },
+    { id: "Class 5", name: "Class 5" },
+    { id: "Class 6", name: "Class 6" },
+    { id: "Class 7", name: "Class 7" },
+    { id: "Class 8", name: "Class 8" },
+    { id: "Class 9", name: "Class 9" },
+    { id: "Class 10", name: "Class 10" },
+    { id: "Class 11", name: "Class 11" },
+    { id: "Class 12", name: "Class 12" },
 ];
 const sections = ["A", "B", "C"];
-const genders = ["Male", "Female", "Other"];
+const genders = ["Male", "Female", "Other"] as const;
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-export default function AddStudentPage() {
+function AddStudentForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const preselectedClass = searchParams.get("class") || "";
     const preselectedSection = searchParams.get("section") || "";
+
+    // Get current academic year
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const academicYear = currentMonth < 3
+        ? `${currentYear - 1}-${currentYear}`
+        : `${currentYear}-${currentYear + 1}`;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
         dateOfBirth: "",
-        gender: "",
+        gender: "" as "Male" | "Female" | "Other" | "",
         bloodGroup: "",
         email: "",
         phone: "",
@@ -89,17 +97,55 @@ export default function AddStudentPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate required fields
+        if (!formData.firstName || !formData.lastName || !formData.dateOfBirth ||
+            !formData.gender || !formData.className || !formData.section ||
+            !formData.guardianName || !formData.guardianRelation || !formData.guardianPhone) {
+            toast.error("Please fill in all required fields");
+            return;
+        }
+
         setIsSubmitting(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const result = await createStudent({
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                dateOfBirth: formData.dateOfBirth,
+                gender: formData.gender as "Male" | "Female" | "Other",
+                bloodGroup: formData.bloodGroup || null,
+                email: formData.email || null,
+                phone: formData.phone || null,
+                address: formData.address || null,
+                city: formData.city || null,
+                state: formData.state || null,
+                pincode: formData.pincode || null,
+                className: formData.className,
+                section: formData.section,
+                academicYear,
+                admissionDate: formData.admissionDate,
+                guardianName: formData.guardianName,
+                guardianRelation: formData.guardianRelation,
+                guardianPhone: formData.guardianPhone,
+                guardianEmail: formData.guardianEmail || null,
+                guardianOccupation: formData.guardianOccupation || null,
+            });
 
-        toast.success("Student added successfully!", {
-            description: `${formData.firstName} ${formData.lastName} has been enrolled in Class ${formData.className}-${formData.section}`,
-        });
-
-        setIsSubmitting(false);
-        router.push("/operations/students");
+            if (result.success) {
+                toast.success("Student added successfully!", {
+                    description: `${formData.firstName} ${formData.lastName} has been enrolled in ${formData.className} - Section ${formData.section}`,
+                });
+                router.push("/operations/students");
+            } else {
+                toast.error("Failed to add student");
+            }
+        } catch (error) {
+            console.error("Error creating student:", error);
+            toast.error("An error occurred while adding the student");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -446,5 +492,13 @@ export default function AddStudentPage() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function AddStudentPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <AddStudentForm />
+        </Suspense>
     );
 }

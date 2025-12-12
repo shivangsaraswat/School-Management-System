@@ -4,59 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
-
-// Mock audit log data
-const auditLogs = [
-    {
-        id: "1",
-        user: "Admin User",
-        action: "CREATE",
-        entityType: "Student",
-        entityId: "STU001",
-        description: "Added new student: Rahul Sharma",
-        ipAddress: "192.168.1.100",
-        createdAt: "2024-12-11T10:30:00Z",
-    },
-    {
-        id: "2",
-        user: "Office Staff",
-        action: "UPDATE",
-        entityType: "Fee",
-        entityId: "FEE001",
-        description: "Collected fee payment of ₹5,000",
-        ipAddress: "192.168.1.101",
-        createdAt: "2024-12-11T09:15:00Z",
-    },
-    {
-        id: "3",
-        user: "Teacher",
-        action: "UPDATE",
-        entityType: "Attendance",
-        entityId: "ATT001",
-        description: "Marked attendance for Class 10A",
-        ipAddress: "192.168.1.102",
-        createdAt: "2024-12-11T08:00:00Z",
-    },
-    {
-        id: "4",
-        user: "Admin User",
-        action: "DELETE",
-        entityType: "Student",
-        entityId: "STU099",
-        description: "Removed student: Old Record",
-        ipAddress: "192.168.1.100",
-        createdAt: "2024-12-10T16:45:00Z",
-    },
-];
-
-const actionColors: Record<string, string> = {
-    CREATE: "success",
-    UPDATE: "warning",
-    DELETE: "destructive",
-};
+import { getAuditLogs, getAuditLogCount } from "@/lib/actions/audit-logs";
+import { format } from "date-fns";
 
 export default async function AuditLogsPage() {
     await requireAdmin();
+
+    // Fetch real data from database
+    const [logs, totalCount] = await Promise.all([
+        getAuditLogs({ limit: 50 }),
+        getAuditLogCount(),
+    ]);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -76,6 +34,14 @@ export default async function AuditLogsPage() {
                     Export
                 </Button>
             </div>
+
+            {/* Stats */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{totalCount}</div>
+                    <p className="text-xs text-muted-foreground">Total Logs Recorded</p>
+                </CardContent>
+            </Card>
 
             {/* Filters */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -107,23 +73,41 @@ export default async function AuditLogsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {auditLogs.map((log) => (
-                                    <tr key={log.id} className="border-b last:border-0">
-                                        <td className="py-4 text-sm">
-                                            {new Date(log.createdAt).toLocaleString()}
-                                        </td>
-                                        <td className="py-4 text-sm font-medium">{log.user}</td>
-                                        <td className="py-4">
-                                            <StatusBadge status={log.action.toLowerCase()}>
-                                                {log.action}
-                                            </StatusBadge>
-                                        </td>
-                                        <td className="py-4 text-sm">{log.description}</td>
-                                        <td className="py-4 text-sm text-muted-foreground font-mono">
-                                            {log.ipAddress}
+                                {logs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                                            <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                            <p>No activity logs yet</p>
+                                            <p className="text-sm mt-1">System activities will be recorded here</p>
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    logs.map((log) => (
+                                        <tr key={log.id} className="border-b last:border-0">
+                                            <td className="py-4 text-sm">
+                                                {format(new Date(log.createdAt), "MMM dd, yyyy HH:mm")}
+                                            </td>
+                                            <td className="py-4 text-sm font-medium">
+                                                {log.userName || "System"}
+                                            </td>
+                                            <td className="py-4">
+                                                <StatusBadge
+                                                    status={
+                                                        log.action === "CREATE" ? "success" :
+                                                            log.action === "UPDATE" ? "warning" :
+                                                                log.action === "DELETE" ? "destructive" : "default"
+                                                    }
+                                                >
+                                                    {log.action}
+                                                </StatusBadge>
+                                            </td>
+                                            <td className="py-4 text-sm">{log.description}</td>
+                                            <td className="py-4 text-sm text-muted-foreground font-mono">
+                                                {log.ipAddress || "N/A"}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

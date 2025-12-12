@@ -15,6 +15,22 @@ import { requireAuth } from "@/lib/dal";
 import { ROLES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { canViewRevenue } from "@/lib/permissions";
+import { getDashboardStatistics, getRecentStudents } from "@/lib/actions/students";
+import { getTeachersCount } from "@/lib/actions/users";
+import { getFeeStatistics } from "@/lib/actions/fees";
+import { getTodayAttendanceStats } from "@/lib/actions/attendance";
+import { formatDistanceToNow } from "date-fns";
+
+// Helper to format currency in lakhs
+function formatCurrency(amount: number): string {
+    if (amount >= 100000) {
+        return `₹${(amount / 100000).toFixed(1)}L`;
+    }
+    if (amount >= 1000) {
+        return `₹${(amount / 1000).toFixed(1)}K`;
+    }
+    return `₹${amount.toFixed(0)}`;
+}
 
 export default async function DashboardPage() {
     const user = await requireAuth();
@@ -27,42 +43,19 @@ export default async function DashboardPage() {
         redirect("/student/results");
     }
 
-    const stats = [
-        {
-            title: "Total Students",
-            value: "2,847",
-            change: "+12%",
-            trend: "up",
-            icon: Users,
-            visible: true,
-        },
-        {
-            title: "Teachers",
-            value: "94",
-            change: "+3",
-            trend: "up",
-            icon: GraduationCap,
-            visible: true,
-        },
-        {
-            title: "Fee Collection",
-            value: "₹24.5L",
-            change: "+18%",
-            trend: "up",
-            icon: Receipt,
-            visible: canViewRevenue(user.role),
-        },
-        {
-            title: "Attendance Today",
-            value: "94.2%",
-            change: "-2.1%",
-            trend: "down",
-            icon: ClipboardCheck,
-            visible: true,
-        },
-    ];
+    // Fetch real data from database
+    const [dashboardStats, teachersCount, feeStats, attendanceStats, recentStudents] = await Promise.all([
+        getDashboardStatistics(),
+        getTeachersCount(),
+        getFeeStatistics(),
+        getTodayAttendanceStats(),
+        getRecentStudents(3),
+    ]);
 
-    const visibleStats = stats.filter(stat => stat.visible);
+    const totalCollected = feeStats.collected + feeStats.pending + feeStats.overdue;
+    const collectionPercentage = totalCollected > 0
+        ? Math.round((feeStats.collected / totalCollected) * 100)
+        : 0;
 
     const getRoleMessage = () => {
         switch (user.role) {
@@ -102,10 +95,12 @@ export default async function DashboardPage() {
                                 <Users className="h-4 w-4 text-white" />
                             </div>
                         </div>
-                        <div className="text-2xl md:text-3xl font-bold mt-3">2,847</div>
+                        <div className="text-2xl md:text-3xl font-bold mt-3">
+                            {dashboardStats.totalStudents.toLocaleString()}
+                        </div>
                         <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-orange-50">
                             <TrendingUp className="h-4 w-4" />
-                            <span className="font-medium">+12% from last month</span>
+                            <span className="font-medium">+{dashboardStats.recentAdmissions} this month</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -120,10 +115,12 @@ export default async function DashboardPage() {
                                 <GraduationCap className="h-4 w-4 text-emerald-600" />
                             </div>
                         </div>
-                        <div className="text-2xl md:text-3xl font-bold mt-3 text-emerald-600">94</div>
+                        <div className="text-2xl md:text-3xl font-bold mt-3 text-emerald-600">
+                            {teachersCount}
+                        </div>
                         <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-emerald-600 font-medium">
-                            <TrendingUp className="h-4 w-4" />
-                            <span>+3 new recruited</span>
+                            <Users className="h-4 w-4" />
+                            <span>Active staff</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -139,10 +136,12 @@ export default async function DashboardPage() {
                                     <Receipt className="h-4 w-4 text-violet-600" />
                                 </div>
                             </div>
-                            <div className="text-2xl md:text-3xl font-bold mt-3 text-violet-600">₹24.5L</div>
+                            <div className="text-2xl md:text-3xl font-bold mt-3 text-violet-600">
+                                {formatCurrency(feeStats.collected)}
+                            </div>
                             <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-violet-600 font-medium">
                                 <TrendingUp className="h-4 w-4" />
-                                <span>+18% from last month</span>
+                                <span>{collectionPercentage}% collected</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -158,10 +157,16 @@ export default async function DashboardPage() {
                                 <ClipboardCheck className="h-4 w-4 text-rose-600" />
                             </div>
                         </div>
-                        <div className="text-2xl md:text-3xl font-bold mt-3 text-rose-600">94.2%</div>
+                        <div className="text-2xl md:text-3xl font-bold mt-3 text-rose-600">
+                            {attendanceStats.percentage}%
+                        </div>
                         <div className="flex items-center gap-1 text-xs md:text-sm mt-1 text-rose-600 font-medium">
-                            <TrendingDown className="h-4 w-4" />
-                            <span>-2.1% from last month</span>
+                            {parseFloat(attendanceStats.percentage) >= 90 ? (
+                                <TrendingUp className="h-4 w-4" />
+                            ) : (
+                                <TrendingDown className="h-4 w-4" />
+                            )}
+                            <span>{attendanceStats.present} present today</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -173,21 +178,25 @@ export default async function DashboardPage() {
                     <CardHeader className="py-3 md:py-4 px-4 md:px-5">
                         <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
                             <Activity className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                            Recent Activity
+                            Recent Admissions
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 md:px-5 pb-4 md:pb-5 pt-0">
                         <div className="space-y-3">
-                            {[
-                                { text: "New student admission: Rahul Sharma", time: "5 min ago" },
-                                { text: "Fee collected from Class 10A", time: "15 min ago" },
-                                { text: "Attendance marked for Class 8B", time: "1 hour ago" },
-                            ].map((activity, i) => (
-                                <div key={i} className="flex items-center justify-between text-xs md:text-sm">
-                                    <span className="text-foreground truncate mr-2">{activity.text}</span>
-                                    <span className="text-muted-foreground whitespace-nowrap">{activity.time}</span>
-                                </div>
-                            ))}
+                            {recentStudents.length > 0 ? (
+                                recentStudents.map((student) => (
+                                    <div key={student.id} className="flex items-center justify-between text-xs md:text-sm">
+                                        <span className="text-foreground truncate mr-2">
+                                            {student.firstName} {student.lastName} - {student.className} {student.section}
+                                        </span>
+                                        <span className="text-muted-foreground whitespace-nowrap">
+                                            {formatDistanceToNow(new Date(student.createdAt), { addSuffix: true })}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-muted-foreground text-sm">No recent admissions</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -196,21 +205,27 @@ export default async function DashboardPage() {
                     <CardHeader className="py-3 md:py-4 px-4 md:px-5">
                         <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
                             <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                            Upcoming Events
+                            Class Overview
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 md:px-5 pb-4 md:pb-5 pt-0">
                         <div className="space-y-3">
-                            {[
-                                { event: "Parent-Teacher Meeting", date: "Dec 15, 2024" },
-                                { event: "Annual Sports Day", date: "Dec 20, 2024" },
-                                { event: "Term Exams Begin", date: "Jan 5, 2025" },
-                            ].map((item, i) => (
-                                <div key={i} className="flex items-center justify-between text-xs md:text-sm">
-                                    <span className="text-foreground truncate mr-2">{item.event}</span>
-                                    <span className="text-muted-foreground whitespace-nowrap">{item.date}</span>
-                                </div>
-                            ))}
+                            <div className="flex items-center justify-between text-xs md:text-sm">
+                                <span>Total Classes</span>
+                                <span className="font-semibold">{dashboardStats.totalClasses}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs md:text-sm">
+                                <span>Total Sections</span>
+                                <span className="font-semibold">{dashboardStats.totalSections}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs md:text-sm">
+                                <span>Avg. per Section</span>
+                                <span className="font-semibold">
+                                    {dashboardStats.totalSections > 0
+                                        ? Math.round(dashboardStats.totalStudents / dashboardStats.totalSections)
+                                        : 0}
+                                </span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -227,15 +242,21 @@ export default async function DashboardPage() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-xs md:text-sm">
                                     <span>Total Collected</span>
-                                    <span className="font-semibold text-green-600">₹18.2L</span>
+                                    <span className="font-semibold text-green-600">
+                                        {formatCurrency(feeStats.collected)}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs md:text-sm">
                                     <span>Pending</span>
-                                    <span className="font-semibold text-orange-500">₹4.8L</span>
+                                    <span className="font-semibold text-orange-500">
+                                        {formatCurrency(feeStats.pending)}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs md:text-sm">
                                     <span>Overdue</span>
-                                    <span className="font-semibold text-red-500">₹1.5L</span>
+                                    <span className="font-semibold text-red-500">
+                                        {formatCurrency(feeStats.overdue)}
+                                    </span>
                                 </div>
                             </div>
                         </CardContent>
@@ -245,22 +266,26 @@ export default async function DashboardPage() {
                         <CardHeader className="py-3 md:py-4 px-4 md:px-5">
                             <CardTitle className="text-sm md:text-base font-medium flex items-center gap-2">
                                 <UserPlus className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                                Quick Actions
+                                Quick Stats
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="px-4 md:px-5 pb-4 md:pb-5 pt-0">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-xs md:text-sm">
-                                    <span>New Admission Inquiries</span>
-                                    <span className="font-semibold text-primary">12 pending</span>
+                                    <span>Boys</span>
+                                    <span className="font-semibold text-blue-600">
+                                        {dashboardStats.genderBreakdown["Male"] || 0}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs md:text-sm">
-                                    <span>Fee Collection Today</span>
-                                    <span className="font-semibold text-green-600">₹45,000</span>
+                                    <span>Girls</span>
+                                    <span className="font-semibold text-pink-600">
+                                        {dashboardStats.genderBreakdown["Female"] || 0}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs md:text-sm">
-                                    <span>Students Active</span>
-                                    <span className="font-semibold">2,847</span>
+                                    <span>New This Month</span>
+                                    <span className="font-semibold">{dashboardStats.recentAdmissions}</span>
                                 </div>
                             </div>
                         </CardContent>

@@ -159,21 +159,29 @@ export const attendance = pgTable("attendance", {
 // ============================================
 // EXAMS TABLE
 // ============================================
+export const examStatusEnum = pgEnum("exam_status", [
+    "scheduled",
+    "ongoing",
+    "completed",
+    "cancelled",
+]);
+
 export const exams = pgTable("exams", {
     id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
     className: text("class_name").notNull(),
+    section: text("section"),
     subject: text("subject").notNull(),
     date: date("date").notNull(),
     startTime: text("start_time").notNull(),
     endTime: text("end_time").notNull(),
     maxMarks: integer("max_marks").notNull(),
-    passingMarks: integer("passing_marks").notNull(),
+    passingMarks: integer("passing_marks").notNull().default(33),
+    status: examStatusEnum("status").notNull().default("scheduled"),
     academicYear: text("academic_year").notNull(),
-    createdBy: uuid("created_by")
-        .notNull()
-        .references(() => users.id),
+    createdBy: uuid("created_by").references(() => users.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // ============================================
@@ -190,9 +198,7 @@ export const marks = pgTable("marks", {
     marksObtained: integer("marks_obtained"),
     isAbsent: boolean("is_absent").notNull().default(false),
     remarks: text("remarks"),
-    enteredBy: uuid("entered_by")
-        .notNull()
-        .references(() => users.id),
+    enteredBy: uuid("entered_by").references(() => users.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -220,12 +226,11 @@ export const inquiries = pgTable("inquiries", {
 // ============================================
 export const auditLogs = pgTable("audit_logs", {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-        .notNull()
-        .references(() => users.id),
+    userId: uuid("user_id").references(() => users.id),
     action: text("action").notNull(), // CREATE, UPDATE, DELETE
     entityType: text("entity_type").notNull(), // student, fee, etc
     entityId: text("entity_id").notNull(),
+    description: text("description").notNull().default(""),
     oldValue: text("old_value"), // JSON string
     newValue: text("new_value"), // JSON string
     ipAddress: text("ip_address"),

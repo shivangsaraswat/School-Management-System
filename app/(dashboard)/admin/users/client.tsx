@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     Users,
     UserPlus,
@@ -10,7 +11,14 @@ import {
     Mail,
     CheckCircle2,
     XCircle,
-    Copy
+    Copy,
+    Pencil,
+    Phone,
+    User as UserIcon,
+    Trash2,
+    AlertTriangle,
+    RefreshCw,
+    UserX
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +43,14 @@ import {
     SheetClose,
 } from "@/components/ui/sheet";
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -42,36 +58,79 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ROLES } from "@/lib/constants";
+import { createUser, deleteUser, updateUser, permanentlyDeleteUser, reactivateUser } from "@/lib/actions/users";
 
-// Mock initial data
-const INITIAL_USERS = [
-    { id: 1, name: "Admin User", email: "admin@school.com", role: ROLES.SUPER_ADMIN, status: "Active", lastActive: "2 mins ago" },
-    { id: 2, name: "John Principal", email: "principal@school.com", role: ROLES.ADMIN, status: "Active", lastActive: "1 hour ago" },
-    { id: 3, name: "Sarah Office", email: "office@school.com", role: ROLES.OFFICE_STAFF, status: "Active", lastActive: "3 hours ago" },
-    { id: 4, name: "Michael Teacher", email: "michael@school.com", role: ROLES.TEACHER, status: "Active", lastActive: "Yesterday" },
-];
+type RoleType = "super_admin" | "admin" | "office_staff" | "teacher" | "student";
 
-export default function UserManagementClient() {
-    const [users, setUsers] = useState(INITIAL_USERS);
+interface User {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    isActive: boolean;
+    lastActive: string;
+    phone?: string | null;
+}
+
+interface UserManagementClientProps {
+    initialUsers: User[];
+}
+
+export default function UserManagementClient({ initialUsers }: UserManagementClientProps) {
+    const router = useRouter();
+    const [users, setUsers] = useState(initialUsers);
     const [searchQuery, setSearchQuery] = useState("");
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Form state
+    // Form state for creating new user
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         role: ROLES.TEACHER,
+        phone: "",
     });
+
+    // Edit profile state
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        name: "",
+        email: "",
+        role: "",
+        phone: "",
+    });
+    const [isEditLoading, setIsEditLoading] = useState(false);
+
+    // View profile state
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [viewingUser, setViewingUser] = useState<User | null>(null);
 
     // New user credentials state (for displaying after creation)
     const [newUserCredentials, setNewUserCredentials] = useState<{ password: string, email: string } | null>(null);
 
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = users.filter(user => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) return true;
+
+        return (
+            user.name.toLowerCase().includes(query) ||
+            user.email.toLowerCase().includes(query) ||
+            user.role.toLowerCase().replace('_', ' ').includes(query) ||
+            user.status.toLowerCase().includes(query) ||
+            (user.phone && user.phone.includes(query))
+        );
+    });
 
     const generatePassword = () => {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
@@ -82,33 +141,216 @@ export default function UserManagementClient() {
         return password;
     };
 
-    const handleCreateUser = (e: React.FormEvent) => {
+    const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
 
-        // Simulate API call
-        const tempPassword = generatePassword();
-        const newUser = {
-            id: users.length + 1,
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            status: "Active",
-            lastActive: "Just now"
-        };
+        try {
+            const tempPassword = generatePassword();
 
-        setUsers([newUser, ...users]);
-        setNewUserCredentials({ email: formData.email, password: tempPassword });
-        setIsSheetOpen(false);
+            const result = await createUser({
+                name: formData.name,
+                email: formData.email,
+                password: tempPassword,
+                role: formData.role as RoleType,
+                phone: formData.phone || undefined,
+            });
 
-        // Reset form
-        setFormData({ name: "", email: "", role: ROLES.TEACHER });
+            if (result.success && result.user) {
+                setNewUserCredentials({ email: formData.email, password: tempPassword });
+                setIsSheetOpen(false);
 
-        toast.success("User created successfully");
+                // Reset form
+                setFormData({ name: "", email: "", role: ROLES.TEACHER, phone: "" });
+
+                // Refresh the page to get updated data
+                router.refresh();
+
+                toast.success("User created successfully");
+            } else {
+                toast.error(result.error || "Failed to create user");
+            }
+        } catch (error) {
+            console.error("Error creating user:", error);
+            toast.error("An error occurred while creating the user");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Deactivate confirmation state
+    const [deactivateConfirmUser, setDeactivateConfirmUser] = useState<User | null>(null);
+    const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
+    const [isDeactivating, setIsDeactivating] = useState(false);
+
+    const openDeactivateConfirmation = (user: User) => {
+        setDeactivateConfirmUser(user);
+        setIsDeactivateDialogOpen(true);
+    };
+
+    const handleDeactivateUser = async () => {
+        if (!deactivateConfirmUser) return;
+
+        setIsDeactivating(true);
+        try {
+            const result = await deleteUser(deactivateConfirmUser.id);
+            if (result.success) {
+                // Update local state immediately for instant UI feedback
+                setUsers(prevUsers =>
+                    prevUsers.map(u =>
+                        u.id === deactivateConfirmUser.id
+                            ? { ...u, isActive: false, status: 'Deactivated' }
+                            : u
+                    )
+                );
+                toast.success("User deactivated successfully");
+                setIsDeactivateDialogOpen(false);
+                setDeactivateConfirmUser(null);
+                router.refresh();
+            }
+        } catch {
+            toast.error("Failed to deactivate user");
+        } finally {
+            setIsDeactivating(false);
+        }
+    };
+
+    // Reactivate state
+    const [reactivateConfirmUser, setReactivateConfirmUser] = useState<User | null>(null);
+    const [isReactivateDialogOpen, setIsReactivateDialogOpen] = useState(false);
+    const [isReactivating, setIsReactivating] = useState(false);
+
+    const openReactivateConfirmation = (user: User) => {
+        setReactivateConfirmUser(user);
+        setIsReactivateDialogOpen(true);
+    };
+
+    const handleReactivateUser = async () => {
+        if (!reactivateConfirmUser) return;
+
+        setIsReactivating(true);
+        try {
+            const result = await reactivateUser(reactivateConfirmUser.id);
+            if (result.success) {
+                // Update local state immediately for instant UI feedback
+                setUsers(prevUsers =>
+                    prevUsers.map(u =>
+                        u.id === reactivateConfirmUser.id
+                            ? { ...u, isActive: true, status: 'Active' }
+                            : u
+                    )
+                );
+                toast.success("User reactivated successfully");
+                setIsReactivateDialogOpen(false);
+                setReactivateConfirmUser(null);
+                router.refresh();
+            }
+        } catch {
+            toast.error("Failed to reactivate user");
+        } finally {
+            setIsReactivating(false);
+        }
+    };
+
+    // Delete confirmation state
+    const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handlePermanentDelete = async () => {
+        if (!deleteConfirmUser) return;
+
+        setIsDeleting(true);
+        try {
+            const result = await permanentlyDeleteUser(deleteConfirmUser.id);
+            if (result.success) {
+                // Update local state immediately for instant UI feedback
+                setUsers(prevUsers => prevUsers.filter(u => u.id !== deleteConfirmUser.id));
+                toast.success("User permanently deleted");
+                setIsDeleteDialogOpen(false);
+                setDeleteConfirmUser(null);
+                router.refresh();
+            }
+        } catch {
+            toast.error("Failed to delete user");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const openDeleteConfirmation = (user: User) => {
+        setDeleteConfirmUser(user);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleEditUser = (user: User) => {
+        setEditingUser(user);
+        setEditFormData({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            phone: user.phone || "",
+        });
+        setIsEditDialogOpen(true);
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser) return;
+
+        setIsEditLoading(true);
+
+        try {
+            const result = await updateUser(editingUser.id, {
+                name: editFormData.name,
+                email: editFormData.email,
+                role: editFormData.role as RoleType,
+                phone: editFormData.phone || undefined,
+            });
+
+            if (result.success) {
+                setIsEditDialogOpen(false);
+                setEditingUser(null);
+                router.refresh();
+                toast.success("User updated successfully");
+            } else {
+                toast.error("Failed to update user");
+            }
+        } catch (error) {
+            console.error("Error updating user:", error);
+            toast.error("An error occurred while updating the user");
+        } finally {
+            setIsEditLoading(false);
+        }
+    };
+
+    const handleViewProfile = (user: User) => {
+        setViewingUser(user);
+        setIsViewDialogOpen(true);
     };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success("Copied to clipboard");
+    };
+
+    const adminCount = users.filter(u => u.role === ROLES.ADMIN || u.role === ROLES.SUPER_ADMIN).length;
+    const activeCount = users.filter(u => u.isActive).length;
+    const deactivatedCount = users.filter(u => !u.isActive).length;
+
+    const getRoleBadgeColor = (role: string) => {
+        switch (role) {
+            case ROLES.SUPER_ADMIN:
+                return 'bg-purple-100 text-purple-800';
+            case ROLES.ADMIN:
+                return 'bg-blue-100 text-blue-800';
+            case ROLES.TEACHER:
+                return 'bg-emerald-100 text-emerald-800';
+            case ROLES.OFFICE_STAFF:
+                return 'bg-amber-100 text-amber-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
     };
 
     return (
@@ -162,25 +404,51 @@ export default function UserManagementClient() {
                             </div>
 
                             <div className="space-y-2">
+                                <Label htmlFor="phone">Phone Number</Label>
+                                <Input
+                                    id="phone"
+                                    placeholder="e.g. +91 9876543210"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
                                 <Label htmlFor="role">Role</Label>
-                                <div className="relative">
-                                    <select
-                                        id="role"
-                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
-                                        value={formData.role}
-                                        onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                                    >
-                                        <option value={ROLES.TEACHER}>Teacher</option>
-                                        <option value={ROLES.OFFICE_STAFF}>Office Staff</option>
-                                        <option value={ROLES.ADMIN}>Admin</option>
-                                        <option value={ROLES.SUPER_ADMIN}>Super Admin</option>
-                                    </select>
-                                    <div className="absolute right-3 top-2.5 pointer-events-none text-muted-foreground">
-                                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
-                                </div>
+                                <Select
+                                    value={formData.role}
+                                    onValueChange={(value) => setFormData({ ...formData, role: value as typeof ROLES.TEACHER })}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={ROLES.TEACHER}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                Teacher
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value={ROLES.OFFICE_STAFF}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                                                Office Staff
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value={ROLES.ADMIN}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                                                Admin
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value={ROLES.SUPER_ADMIN}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-purple-500"></span>
+                                                Super Admin
+                                            </div>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <p className="text-xs text-muted-foreground">
                                     Assigning the correct role ensures proper access control.
                                 </p>
@@ -200,7 +468,9 @@ export default function UserManagementClient() {
                                 <SheetClose asChild>
                                     <Button variant="outline" type="button">Cancel</Button>
                                 </SheetClose>
-                                <Button type="submit">Create Account</Button>
+                                <Button type="submit" disabled={isLoading}>
+                                    {isLoading ? "Creating..." : "Create Account"}
+                                </Button>
                             </SheetFooter>
                         </form>
                     </SheetContent>
@@ -263,7 +533,27 @@ export default function UserManagementClient() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{users.length}</div>
-                        <p className="text-xs text-muted-foreground">Active accounts in system</p>
+                        <p className="text-xs text-muted-foreground">Accounts in system</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-emerald-600">{activeCount}</div>
+                        <p className="text-xs text-muted-foreground">Currently active</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Deactivated</CardTitle>
+                        <UserX className="h-4 w-4 text-gray-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-gray-500">{deactivatedCount}</div>
+                        <p className="text-xs text-muted-foreground">Temporarily disabled</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -272,9 +562,7 @@ export default function UserManagementClient() {
                         <Shield className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {users.filter(u => u.role === ROLES.ADMIN || u.role === ROLES.SUPER_ADMIN).length}
-                        </div>
+                        <div className="text-2xl font-bold">{adminCount}</div>
                         <p className="text-xs text-muted-foreground">With advanced permissions</p>
                     </CardContent>
                 </Card>
@@ -325,30 +613,33 @@ export default function UserManagementClient() {
                                         <tr key={user.id} className="hover:bg-muted/5">
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={`/avatars/${user.id}.png`} />
+                                                    <Avatar className={`h-8 w-8 ${!user.isActive ? 'opacity-60' : ''}`}>
+                                                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} />
                                                         <AvatarFallback>{user.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                                                     </Avatar>
-                                                    <div>
+                                                    <div className={!user.isActive ? 'opacity-70' : ''}>
                                                         <div className="font-medium">{user.name}</div>
                                                         <div className="text-xs text-muted-foreground">{user.email}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize
-                                                    ${user.role === ROLES.SUPER_ADMIN ? 'bg-purple-100 text-purple-800' :
-                                                        user.role === ROLES.ADMIN ? 'bg-blue-100 text-blue-800' :
-                                                            user.role === ROLES.TEACHER ? 'bg-emerald-100 text-emerald-800' :
-                                                                'bg-gray-100 text-gray-800'}`}>
+                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${getRoleBadgeColor(user.role)} ${!user.isActive ? 'opacity-60' : ''}`}>
                                                     {user.role.replace("_", " ")}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                                    {user.status}
-                                                </span>
+                                                {user.isActive ? (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                        Active
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                                                        Deactivated
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-muted-foreground">
                                                 {user.lastActive}
@@ -362,11 +653,38 @@ export default function UserManagementClient() {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                                        <DropdownMenuItem>Edit Permissions</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleViewProfile(user)}>
+                                                            <UserIcon className="mr-2 h-4 w-4" />
+                                                            View Profile
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            Edit Profile
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="text-red-600">
-                                                            Deactivate User
+                                                        {user.isActive ? (
+                                                            <DropdownMenuItem
+                                                                className="text-amber-600"
+                                                                onClick={() => openDeactivateConfirmation(user)}
+                                                            >
+                                                                <UserX className="mr-2 h-4 w-4" />
+                                                                Deactivate User
+                                                            </DropdownMenuItem>
+                                                        ) : (
+                                                            <DropdownMenuItem
+                                                                className="text-green-600"
+                                                                onClick={() => openReactivateConfirmation(user)}
+                                                            >
+                                                                <RefreshCw className="mr-2 h-4 w-4" />
+                                                                Reactivate User
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem
+                                                            className="text-red-600"
+                                                            onClick={() => openDeleteConfirmation(user)}
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete Permanently
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -379,6 +697,324 @@ export default function UserManagementClient() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Edit User Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-5 w-5" />
+                            Edit User Profile
+                        </DialogTitle>
+                        <DialogDescription>
+                            Make changes to the user&apos;s profile. Click save when you&apos;re done.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateUser}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-name">Full Name</Label>
+                                <Input
+                                    id="edit-name"
+                                    value={editFormData.name}
+                                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                    placeholder="Enter full name"
+                                    required
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-email">Email</Label>
+                                <Input
+                                    id="edit-email"
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                    placeholder="Enter email address"
+                                    required
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-phone">Phone Number</Label>
+                                <Input
+                                    id="edit-phone"
+                                    value={editFormData.phone}
+                                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                    placeholder="Enter phone number"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-role">Role</Label>
+                                <Select
+                                    value={editFormData.role}
+                                    onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={ROLES.TEACHER}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                Teacher
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value={ROLES.OFFICE_STAFF}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                                                Office Staff
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value={ROLES.ADMIN}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                                                Admin
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value={ROLES.SUPER_ADMIN}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-purple-500"></span>
+                                                Super Admin
+                                            </div>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isEditLoading}>
+                                {isEditLoading ? "Saving..." : "Save Changes"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* View Profile Dialog */}
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+                <DialogContent className="max-w-[90vw] sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-base">
+                            <UserIcon className="h-4 w-4" />
+                            User Profile
+                        </DialogTitle>
+                        <DialogDescription className="text-xs">
+                            View detailed information about this user.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {viewingUser && (
+                        <div className="py-2 sm:py-4">
+                            <div className="flex items-center justify-center mb-4 sm:mb-6">
+                                <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${viewingUser.name}`} />
+                                    <AvatarFallback className="text-xl sm:text-2xl">{viewingUser.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                            <div className="text-center mb-4 sm:mb-6">
+                                <h3 className="text-base sm:text-lg font-semibold">{viewingUser.name}</h3>
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize mt-1.5 ${getRoleBadgeColor(viewingUser.role)}`}>
+                                    {viewingUser.role.replace("_", " ")}
+                                </span>
+                            </div>
+                            <div className="space-y-2 sm:space-y-3">
+                                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-muted/50">
+                                    <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] sm:text-xs text-muted-foreground">Email</p>
+                                        <p className="text-xs sm:text-sm font-medium truncate">{viewingUser.email}</p>
+                                    </div>
+                                </div>
+                                {viewingUser.phone && (
+                                    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-muted/50">
+                                        <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] sm:text-xs text-muted-foreground">Phone</p>
+                                            <p className="text-xs sm:text-sm font-medium">{viewingUser.phone}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                    <div className="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-muted/50">
+                                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] sm:text-xs text-muted-foreground">Status</p>
+                                            <p className="text-xs sm:text-sm font-medium flex items-center gap-1">
+                                                <span className={`h-1.5 w-1.5 rounded-full ${viewingUser.isActive ? "bg-emerald-500" : "bg-gray-400"}`}></span>
+                                                <span className="truncate">{viewingUser.status}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-muted/50">
+                                        <UserIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] sm:text-xs text-muted-foreground">Last Active</p>
+                                            <p className="text-xs sm:text-sm font-medium truncate">{viewingUser.lastActive}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setIsViewDialogOpen(false)}>
+                            Close
+                        </Button>
+                        {viewingUser && (
+                            <Button size="sm" className="w-full sm:w-auto" onClick={() => {
+                                setIsViewDialogOpen(false);
+                                handleEditUser(viewingUser);
+                            }}>
+                                <Pencil className="mr-2 h-3.5 w-3.5" />
+                                Edit Profile
+                            </Button>
+                        )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertTriangle className="h-5 w-5" />
+                            Permanently Delete User
+                        </DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone. This will permanently delete the user account and remove all associated data.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {deleteConfirmUser && (
+                        <div className="py-4">
+                            <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${deleteConfirmUser.name}`} />
+                                    <AvatarFallback>{deleteConfirmUser.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">{deleteConfirmUser.name}</p>
+                                    <p className="text-sm text-muted-foreground">{deleteConfirmUser.email}</p>
+                                </div>
+                            </div>
+                            <p className="mt-4 text-sm text-muted-foreground">
+                                Are you sure you want to permanently delete this user? They will not be able to log in and all their data will be removed.
+                            </p>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handlePermanentDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? "Deleting..." : "Delete Permanently"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Deactivate Confirmation Dialog */}
+            <Dialog open={isDeactivateDialogOpen} onOpenChange={setIsDeactivateDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-amber-600">
+                            <UserX className="h-5 w-5" />
+                            Deactivate User
+                        </DialogTitle>
+                        <DialogDescription>
+                            This will temporarily disable the user&apos;s access. You can reactivate them later.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {deactivateConfirmUser && (
+                        <div className="py-4">
+                            <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${deactivateConfirmUser.name}`} />
+                                    <AvatarFallback>{deactivateConfirmUser.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">{deactivateConfirmUser.name}</p>
+                                    <p className="text-sm text-muted-foreground">{deactivateConfirmUser.email}</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">
+                                <p className="font-medium text-amber-700 mb-1">What happens when you deactivate?</p>
+                                <ul className="text-muted-foreground space-y-1 text-xs">
+                                    <li>• User cannot log in to the dashboard</li>
+                                    <li>• Their data is preserved in the system</li>
+                                    <li>• You can reactivate them at any time</li>
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeactivateDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-amber-500 hover:bg-amber-600 text-white"
+                            onClick={handleDeactivateUser}
+                            disabled={isDeactivating}
+                        >
+                            {isDeactivating ? "Deactivating..." : "Deactivate User"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Reactivate Confirmation Dialog */}
+            <Dialog open={isReactivateDialogOpen} onOpenChange={setIsReactivateDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-green-600">
+                            <RefreshCw className="h-5 w-5" />
+                            Reactivate User
+                        </DialogTitle>
+                        <DialogDescription>
+                            This will restore the user&apos;s access to the system.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {reactivateConfirmUser && (
+                        <div className="py-4">
+                            <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 border border-green-200">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${reactivateConfirmUser.name}`} />
+                                    <AvatarFallback>{reactivateConfirmUser.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">{reactivateConfirmUser.name}</p>
+                                    <p className="text-sm text-muted-foreground">{reactivateConfirmUser.email}</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">
+                                <p className="font-medium text-green-700 mb-1">What happens when you reactivate?</p>
+                                <ul className="text-muted-foreground space-y-1 text-xs">
+                                    <li>• User can log in to the dashboard again</li>
+                                    <li>• All their previous data is restored</li>
+                                    <li>• Their permissions remain unchanged</li>
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsReactivateDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                            onClick={handleReactivateUser}
+                            disabled={isReactivating}
+                        >
+                            {isReactivating ? "Reactivating..." : "Reactivate User"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
