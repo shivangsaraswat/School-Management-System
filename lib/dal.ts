@@ -10,6 +10,29 @@ import {
     canAccessStudentPortal,
     canViewRevenue
 } from "@/lib/permissions";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+// Verify user still exists in database and is active
+async function verifyUserInDatabase(userId: string): Promise<{ exists: boolean; isActive: boolean; role?: string }> {
+    try {
+        const user = await db
+            .select({ id: users.id, isActive: users.isActive, role: users.role })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+        if (user.length === 0) {
+            return { exists: false, isActive: false };
+        }
+
+        return { exists: true, isActive: user[0].isActive, role: user[0].role };
+    } catch {
+        // If database check fails, assume user doesn't exist for security
+        return { exists: false, isActive: false };
+    }
+}
 
 // Get current user (cached per request)
 export const getCurrentUser = cache(async () => {
@@ -28,14 +51,34 @@ export const getCurrentUser = cache(async () => {
 });
 
 // Require authentication - throws redirect if not authenticated
+// Also validates user still exists in database and is active
 export async function requireAuth() {
-    const user = await getCurrentUser();
+    const session = await auth();
 
-    if (!user) {
+    if (!session?.user) {
         redirect("/login");
     }
 
-    return user;
+    // CRITICAL: Verify user still exists in database and is active
+    const dbStatus = await verifyUserInDatabase(session.user.id);
+
+    if (!dbStatus.exists) {
+        // User was deleted from database - redirect to login with error
+        // Session will be invalid, user needs to re-authenticate
+        redirect("/login?error=account_deleted");
+    }
+
+    if (!dbStatus.isActive) {
+        // User was deactivated - redirect to login with error
+        redirect("/login?error=account_deactivated");
+    }
+
+    return {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: (dbStatus.role || session.user.role) as Role, // Use database role as source of truth
+    };
 }
 
 // Require specific role - throws redirect if not authorized

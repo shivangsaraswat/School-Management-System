@@ -3,9 +3,11 @@
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, and, like, or, count, desc } from "drizzle-orm";
+import { requireAuth, requireAdmin, requireSuperAdmin } from "@/lib/dal";
+import { createAuditLog } from "@/lib/internal/audit";
 import { revalidatePath } from "next/cache";
-import { hash } from "bcryptjs";
-import type { NewUser, User } from "@/db/schema";
+import { hash, compare } from "bcryptjs";
+import type { Role } from "@/lib/constants";
 
 // ============================================
 // GET USERS (Staff/Teachers)
@@ -91,6 +93,8 @@ export async function createUser(data: {
     role: "super_admin" | "admin" | "office_staff" | "teacher" | "student";
     phone?: string;
 }) {
+    const currentUser = await requireAdmin();
+
     // Check if email already exists
     const existing = await db
         .select({ id: users.id })
@@ -117,6 +121,20 @@ export async function createUser(data: {
             role: users.role,
         });
 
+    // Log the action
+    await createAuditLog({
+        userId: currentUser.id,
+        action: "CREATE",
+        entityType: "user",
+        entityId: result[0].id,
+        description: `Created new user ${data.name} (${data.email}) with role ${data.role}`,
+        newValue: JSON.stringify({
+            name: data.name,
+            email: data.email,
+            role: data.role
+        }),
+    });
+
     revalidatePath("/admin/users");
     return { success: true, user: result[0] };
 }
@@ -135,6 +153,15 @@ export async function updateUser(
         isActive: boolean;
     }>
 ) {
+    const currentUser = await requireAdmin();
+
+    // Get old user data for audit log
+    const oldUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+
     const result = await db
         .update(users)
         .set({
@@ -148,6 +175,35 @@ export async function updateUser(
             name: users.name,
             role: users.role,
         });
+
+    // Log the action
+    if (oldUser.length > 0) {
+        // Determine what changed for description
+        const changes = [];
+        if (data.name && data.name !== oldUser[0].name) changes.push("name");
+        if (data.email && data.email !== oldUser[0].email) changes.push("email");
+        if (data.role && data.role !== oldUser[0].role) changes.push("role");
+        if (data.phone !== undefined && data.phone !== oldUser[0].phone) changes.push("phone");
+        if (data.isActive !== undefined && data.isActive !== oldUser[0].isActive) changes.push("status");
+
+        if (changes.length > 0) {
+            await createAuditLog({
+                userId: currentUser.id,
+                action: "UPDATE",
+                entityType: "user",
+                entityId: id,
+                description: `Updated user ${result[0].name}: changed ${changes.join(", ")}`,
+                oldValue: JSON.stringify({
+                    name: oldUser[0].name,
+                    email: oldUser[0].email,
+                    role: oldUser[0].role,
+                    phone: oldUser[0].phone,
+                    isActive: oldUser[0].isActive
+                }),
+                newValue: JSON.stringify(data),
+            });
+        }
+    }
 
     revalidatePath("/admin/users");
     return { success: true, user: result[0] };
@@ -173,7 +229,15 @@ export async function updatePassword(id: string, newPassword: string) {
 // ============================================
 // DELETE USER (Soft delete - deactivate)
 // ============================================
+// ============================================
+// DELETE USER (Soft delete - deactivate)
+// ============================================
 export async function deleteUser(id: string) {
+    const currentUser = await requireAdmin();
+
+    // Get user info for log
+    const user = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, id)).limit(1);
+
     await db
         .update(users)
         .set({
@@ -181,6 +245,17 @@ export async function deleteUser(id: string) {
             updatedAt: new Date(),
         })
         .where(eq(users.id, id));
+
+    // Log action
+    if (user.length > 0) {
+        await createAuditLog({
+            userId: currentUser.id,
+            action: "DEACTIVATE",
+            entityType: "user",
+            entityId: id,
+            description: `Deactivated user ${user[0].name} (${user[0].email})`,
+        });
+    }
 
     revalidatePath("/admin/users");
     return { success: true };
@@ -190,9 +265,26 @@ export async function deleteUser(id: string) {
 // PERMANENTLY DELETE USER (Hard delete)
 // ============================================
 export async function permanentlyDeleteUser(id: string) {
+    const currentUser = await requireSuperAdmin();
+
+    // Get user info for log
+    const user = await db.select({ name: users.name, email: users.email, role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+
     await db
         .delete(users)
         .where(eq(users.id, id));
+
+    // Log action
+    if (user.length > 0) {
+        await createAuditLog({
+            userId: currentUser.id,
+            action: "DELETE",
+            entityType: "user",
+            entityId: id,
+            description: `Permanently deleted user ${user[0].name} (${user[0].email})`,
+            oldValue: JSON.stringify(user[0]),
+        });
+    }
 
     revalidatePath("/admin/users");
     return { success: true };
@@ -201,7 +293,14 @@ export async function permanentlyDeleteUser(id: string) {
 // ============================================
 // REACTIVATE USER
 // ============================================
+// REACTIVATE USER
+// ============================================
 export async function reactivateUser(id: string) {
+    const currentUser = await requireAdmin();
+
+    // Get user info for log
+    const user = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, id)).limit(1);
+
     await db
         .update(users)
         .set({
@@ -209,6 +308,17 @@ export async function reactivateUser(id: string) {
             updatedAt: new Date(),
         })
         .where(eq(users.id, id));
+
+    // Log action
+    if (user.length > 0) {
+        await createAuditLog({
+            userId: currentUser.id,
+            action: "REACTIVATE",
+            entityType: "user",
+            entityId: id,
+            description: `Reactivated user ${user[0].name} (${user[0].email})`,
+        });
+    }
 
     revalidatePath("/admin/users");
     return { success: true };
@@ -218,10 +328,11 @@ export async function reactivateUser(id: string) {
 // GET USERS COUNT
 // ============================================
 export async function getUsersCount(role?: string) {
+    await requireAuth();
     const conditions = [eq(users.isActive, true)];
 
     if (role) {
-        conditions.push(eq(users.role, role as any));
+        conditions.push(eq(users.role, role as Role));
     }
 
     const result = await db
@@ -237,4 +348,177 @@ export async function getUsersCount(role?: string) {
 // ============================================
 export async function getTeachersCount() {
     return getUsersCount("teacher");
+}
+
+// ============================================
+// REGENERATE PASSWORD (Super Admin only)
+// ============================================
+export async function regeneratePassword(userId: string): Promise<{ success: boolean; newPassword?: string; error?: string }> {
+    try {
+        const currentUser = await requireSuperAdmin();
+
+        // Generate a new random password
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+        let newPassword = "";
+        for (let i = 0; i < 12; i++) {
+            newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+
+        // Hash the new password
+        const hashedPassword = await hash(newPassword, 12);
+
+        // Update the user's password in the database
+        await db
+            .update(users)
+            .set({
+                password: hashedPassword,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.id, userId));
+
+        // Log action
+        const user = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, userId)).limit(1);
+        if (user.length > 0) {
+            await createAuditLog({
+                userId: currentUser.id,
+                action: "PASSWORD_RESET",
+                entityType: "user",
+                entityId: userId,
+                description: `Regenerated password for user ${user[0].name} (${user[0].email})`,
+            });
+        }
+
+        revalidatePath("/admin/users");
+
+        return { success: true, newPassword };
+    } catch (error) {
+        console.error("Failed to regenerate password:", error);
+        return { success: false, error: "Failed to regenerate password" };
+    }
+}
+
+// ============================================
+// UPDATE OWN PROFILE (User updating their own profile)
+// Can update: name, phone
+// Cannot update: email, role (those require admin)
+// ============================================
+export async function updateOwnProfile(
+    userId: string,
+    data: { name: string; phone?: string }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const currentUser = await requireAuth();
+        if (currentUser.id !== userId) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Get old user data for audit log
+        const oldUser = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+        await db
+            .update(users)
+            .set({
+                name: data.name,
+                phone: data.phone || null,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.id, userId));
+
+        // Log action
+        if (oldUser.length > 0) {
+            const changes = [];
+            if (data.name && data.name !== oldUser[0].name) changes.push("name");
+            if (data.phone !== undefined && data.phone !== oldUser[0].phone) changes.push("phone");
+
+            if (changes.length > 0) {
+                await createAuditLog({
+                    userId: userId,
+                    action: "UPDATE",
+                    entityType: "user",
+                    entityId: userId,
+                    description: `User updated their profile: changed ${changes.join(", ")}`,
+                    oldValue: JSON.stringify({
+                        name: oldUser[0].name,
+                        phone: oldUser[0].phone
+                    }),
+                    newValue: JSON.stringify(data),
+                });
+            }
+        }
+
+        revalidatePath("/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update profile:", error);
+        return { success: false, error: "Failed to update profile" };
+    }
+}
+
+// ============================================
+// CHANGE PASSWORD (User changing their own password)
+// ============================================
+
+export async function changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const currentUser = await requireAuth();
+        if (currentUser.id !== userId) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Get user's current password hash
+        const user = await db
+            .select({ password: users.password })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+
+        if (!user[0]) {
+            return { success: false, error: "User not found" };
+        }
+
+        // Verify current password
+        const isValidPassword = await compare(currentPassword, user[0].password);
+        if (!isValidPassword) {
+            return { success: false, error: "Current password is incorrect" };
+        }
+
+        // Validate new password
+        if (newPassword.length < 6) {
+            return { success: false, error: "New password must be at least 6 characters" };
+        }
+
+        // Hash and update new password
+        const hashedPassword = await hash(newPassword, 12);
+        await db
+            .update(users)
+            .set({
+                password: hashedPassword,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.id, userId));
+
+        // Log action
+        await createAuditLog({
+            userId: userId,
+            action: "PASSWORD_CHANGE",
+            entityType: "user",
+            entityId: userId,
+            description: "User changed their password",
+        });
+
+        revalidatePath("/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to change password:", error);
+        return { success: false, error: "Failed to change password" };
+    }
 }

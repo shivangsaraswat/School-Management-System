@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address"),
@@ -21,11 +20,21 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get("callbackUrl") || "/";
+    const error = searchParams.get("error");
     const [isLoading, setIsLoading] = useState(false);
+
+    // Show error messages for account issues
+    useEffect(() => {
+        if (error === "account_deleted") {
+            toast.error("Your account has been deleted. Please contact an administrator.");
+        } else if (error === "account_deactivated") {
+            toast.error("Your account has been deactivated. Please contact an administrator.");
+        }
+    }, [error]);
 
     const {
         register,
@@ -59,7 +68,7 @@ export default function LoginPage() {
             toast.success("Welcome back!");
             router.push(callbackUrl);
             router.refresh();
-        } catch (error) {
+        } catch (_) {
             toast.error("Something went wrong. Please try again.");
             setIsLoading(false);
         }
@@ -67,6 +76,25 @@ export default function LoginPage() {
 
     return (
         <div className="w-full">
+            {/* Account Error Alert */}
+            {(error === "account_deleted" || error === "account_deactivated") && (
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-semibold text-red-800">
+                            {error === "account_deleted" ? "Account Deleted" : "Account Deactivated"}
+                        </p>
+                        <p className="text-sm text-red-600 mt-0.5">
+                            {error === "account_deleted"
+                                ? "Your account has been permanently deleted from the system."
+                                : "Your account has been temporarily deactivated."
+                            }
+                            {" "}Please contact an administrator.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col space-y-4 mb-10">
                 <h1 className="text-[32px] font-bold text-[#0f172a] leading-tight">
                     Log in to the Admin
@@ -166,5 +194,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

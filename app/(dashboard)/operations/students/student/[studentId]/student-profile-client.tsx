@@ -9,8 +9,6 @@ import {
     MapPin,
     Mail,
     Phone,
-    School,
-    FileText,
     Shield,
     Activity,
     User
@@ -32,7 +30,14 @@ import { format } from "date-fns";
 
 interface StudentProfileClientProps {
     student: Student;
-    fees: any[];
+    fees: Array<{
+        id: string;
+        amount: string;
+        status: string;
+        month: string;
+        dueDate: string;
+        feeType?: { name: string } | null;
+    }>;
     feeStatus: string;
     attendanceHistory: Array<{
         id: string;
@@ -395,8 +400,8 @@ export function StudentProfileClient({
                                         <div key={log.id} className="flex items-center justify-between py-2 border-b last:border-0">
                                             <div className="flex items-center gap-4">
                                                 <div className={`h-2 w-2 rounded-full ${log.status === 'present' ? 'bg-green-500' :
-                                                        log.status === 'absent' ? 'bg-red-500' :
-                                                            log.status === 'late' ? 'bg-yellow-500' : 'bg-blue-500'
+                                                    log.status === 'absent' ? 'bg-red-500' :
+                                                        log.status === 'late' ? 'bg-yellow-500' : 'bg-blue-500'
                                                     }`} />
                                                 <div>
                                                     <div className="font-medium text-sm">
@@ -409,8 +414,8 @@ export function StudentProfileClient({
                                             </div>
                                             <div className="text-right">
                                                 <div className={`text-sm font-medium capitalize ${log.status === 'present' ? 'text-green-600' :
-                                                        log.status === 'absent' ? 'text-red-600' :
-                                                            log.status === 'late' ? 'text-yellow-600' : 'text-blue-600'
+                                                    log.status === 'absent' ? 'text-red-600' :
+                                                        log.status === 'late' ? 'text-yellow-600' : 'text-blue-600'
                                                     }`}>{log.status}</div>
                                             </div>
                                         </div>

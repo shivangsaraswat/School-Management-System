@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { inquiries } from "@/db/schema";
 import { eq, and, like, or, count, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireOperations } from "@/lib/dal";
 
 // ============================================
 // GET INQUIRIES
@@ -14,11 +15,12 @@ export async function getInquiries(options?: {
     limit?: number;
     offset?: number;
 }) {
+    await requireOperations();
     const { status, search, limit = 50, offset = 0 } = options || {};
     const conditions = [];
 
     if (status) {
-        conditions.push(eq(inquiries.status, status as any));
+        conditions.push(eq(inquiries.status, status as "new" | "contacted" | "scheduled" | "enrolled" | "declined"));
     }
     if (search) {
         conditions.push(
@@ -47,6 +49,7 @@ export async function getInquiries(options?: {
 // GET INQUIRY BY ID
 // ============================================
 export async function getInquiryById(id: string) {
+    await requireOperations();
     const result = await db
         .select()
         .from(inquiries)
@@ -68,6 +71,7 @@ export async function createInquiry(data: {
     source?: string | null;
     notes?: string | null;
 }) {
+    await requireOperations();
     const result = await db
         .insert(inquiries)
         .values({
@@ -85,8 +89,9 @@ export async function createInquiry(data: {
 // ============================================
 export async function updateInquiryStatus(
     id: string,
-    status: "new" | "contacted" | "scheduled" | "enrolled" | "rejected"
+    status: "new" | "contacted" | "scheduled" | "enrolled" | "declined"
 ) {
+    await requireOperations();
     const result = await db
         .update(inquiries)
         .set({
@@ -113,10 +118,11 @@ export async function updateInquiry(
         classAppliedFor: string;
         source: string | null;
         notes: string | null;
-        status: "new" | "contacted" | "scheduled" | "enrolled" | "rejected";
+        status: "new" | "contacted" | "scheduled" | "enrolled" | "declined";
         followUpDate: string | null;
     }>
 ) {
+    await requireOperations();
     const result = await db
         .update(inquiries)
         .set({
@@ -134,6 +140,7 @@ export async function updateInquiry(
 // DELETE INQUIRY
 // ============================================
 export async function deleteInquiry(id: string) {
+    await requireOperations();
     await db.delete(inquiries).where(eq(inquiries.id, id));
     revalidatePath("/operations/admissions");
     return { success: true };
@@ -143,6 +150,7 @@ export async function deleteInquiry(id: string) {
 // GET INQUIRY STATISTICS
 // ============================================
 export async function getInquiryStatistics() {
+    await requireOperations();
     const result = await db
         .select({
             status: inquiries.status,
@@ -164,6 +172,6 @@ export async function getInquiryStatistics() {
         contacted: stats["contacted"] || 0,
         scheduled: stats["scheduled"] || 0,
         enrolled: stats["enrolled"] || 0,
-        rejected: stats["rejected"] || 0,
+        declined: stats["declined"] || 0,
     };
 }

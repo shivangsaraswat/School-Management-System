@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { exams, marks, students } from "@/db/schema";
 import { eq, and, count, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAcademics } from "@/lib/dal";
 
 // ============================================
 // GET EXAMS
@@ -16,6 +17,7 @@ export async function getExams(options?: {
     limit?: number;
     offset?: number;
 }) {
+    await requireAcademics();
     const { className, subject, status, academicYear, limit = 50, offset = 0 } = options || {};
     const conditions = [];
 
@@ -26,7 +28,7 @@ export async function getExams(options?: {
         conditions.push(eq(exams.subject, subject));
     }
     if (status) {
-        conditions.push(eq(exams.status, status as any));
+        conditions.push(eq(exams.status, status as "scheduled" | "ongoing" | "completed" | "cancelled"));
     }
     if (academicYear) {
         conditions.push(eq(exams.academicYear, academicYear));
@@ -49,6 +51,7 @@ export async function getExams(options?: {
 // GET EXAM BY ID
 // ============================================
 export async function getExamById(id: string) {
+    await requireAcademics();
     const result = await db
         .select()
         .from(exams)
@@ -72,6 +75,7 @@ export async function createExam(data: {
     maxMarks: number;
     academicYear: string;
 }) {
+    await requireAcademics();
     const result = await db
         .insert(exams)
         .values({
@@ -101,6 +105,7 @@ export async function updateExam(
         status: "scheduled" | "ongoing" | "completed" | "cancelled";
     }>
 ) {
+    await requireAcademics();
     const result = await db
         .update(exams)
         .set({
@@ -118,6 +123,7 @@ export async function updateExam(
 // DELETE EXAM
 // ============================================
 export async function deleteExam(id: string) {
+    await requireAcademics();
     await db.delete(exams).where(eq(exams.id, id));
     revalidatePath("/academics/exams");
     return { success: true };
@@ -127,6 +133,7 @@ export async function deleteExam(id: string) {
 // GET EXAM STATISTICS
 // ============================================
 export async function getExamStatistics() {
+    await requireAcademics();
     const result = await db
         .select({
             status: exams.status,
@@ -165,6 +172,7 @@ export async function saveMarks(
         remarks?: string;
     }>
 ) {
+    await requireAcademics();
     // Delete existing marks for this exam
     await db.delete(marks).where(eq(marks.examId, examId));
 
@@ -186,6 +194,7 @@ export async function saveMarks(
 // GET MARKS BY EXAM
 // ============================================
 export async function getMarksByExam(examId: string) {
+    await requireAcademics();
     const result = await db
         .select({
             id: marks.id,

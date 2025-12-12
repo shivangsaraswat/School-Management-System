@@ -171,7 +171,7 @@ export default function RevenueDashboardClient({ stats, monthlyData, classData }
                                                 color: 'hsl(var(--popover-foreground))',
                                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                                             }}
-                                            formatter={(value: any) => [`₹${(value).toLocaleString()}`, 'Collected']}
+                                            formatter={(value: number) => [`₹${(value).toLocaleString()}`, 'Collected']}
                                             labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                                         />
                                         <Area
@@ -228,7 +228,7 @@ export default function RevenueDashboardClient({ stats, monthlyData, classData }
                                                 color: 'hsl(var(--popover-foreground))',
                                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                                             }}
-                                            formatter={(value: any) => [`${value}%`, 'Collection Rate']}
+                                            formatter={(value: number) => [`${value}%`, 'Collection Rate']}
                                         />
                                         <Bar dataKey="collected" radius={[0, 4, 4, 0]} background={{ fill: 'hsl(var(--muted))' }}>
                                             {classData.map((entry, index) => (

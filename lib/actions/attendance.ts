@@ -4,11 +4,14 @@ import { db } from "@/db";
 import { attendance, students } from "@/db/schema";
 import { eq, and, sql, count, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAcademics, requireAuth } from "@/lib/dal";
+import { createAuditLog } from "@/lib/internal/audit";
 
 // ============================================
 // GET TODAY'S ATTENDANCE STATISTICS
 // ============================================
 export async function getTodayAttendanceStats() {
+    await requireAcademics();
     const today = new Date().toISOString().split("T")[0];
 
     const result = await db
@@ -47,6 +50,7 @@ export async function getAttendanceByClass(
     section: string,
     date: string
 ) {
+    await requireAcademics();
     const result = await db
         .select({
             id: attendance.id,
@@ -82,6 +86,8 @@ export async function markAttendance(
     date: string,
     markedBy: string
 ) {
+    const currentUser = await requireAcademics();
+
     // Delete existing attendance for the date and students
     const studentIds = records.map((r) => r.studentId);
 
@@ -102,6 +108,16 @@ export async function markAttendance(
 
     await db.insert(attendance).values(insertData);
 
+    // Log action
+    await createAuditLog({
+        userId: currentUser.id,
+        action: "UPDATE",
+        entityType: "attendance",
+        entityId: date,
+        description: `Marked attendance for ${records.length} students for date ${date}`,
+        newValue: JSON.stringify({ count: records.length, date }),
+    });
+
     revalidatePath("/academics/attendance");
     return { success: true, count: records.length };
 }
@@ -117,6 +133,7 @@ export async function getStudentAttendanceHistory(
         limit?: number;
     }
 ) {
+    await requireAuth();
     const { startDate, endDate, limit = 30 } = options || {};
 
     const conditions = [eq(attendance.studentId, studentId)];
@@ -150,6 +167,7 @@ export async function getAttendancePercentage(
     studentId: string,
     academicYear?: string
 ) {
+    await requireAuth();
     const year = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
     // Get start date of academic year (assuming April 1st)

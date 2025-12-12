@@ -1,10 +1,12 @@
 "use server";
 
 import { db } from "@/db";
-import { students, fees } from "@/db/schema";
+import { students } from "@/db/schema";
 import { eq, and, like, or, count, sql, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import type { NewStudent, Student } from "@/db/schema";
+import { requireAuth, requireOperations } from "@/lib/dal";
+import { createAuditLog } from "@/lib/internal/audit";
+import type { NewStudent } from "@/db/schema";
 
 // ============================================
 // GET STUDENTS
@@ -25,6 +27,8 @@ export async function getStudents(options?: {
         limit = 50,
         offset = 0,
     } = options || {};
+
+    await requireAuth();
 
     const conditions = [];
 
@@ -64,6 +68,7 @@ export async function getStudents(options?: {
 // GET STUDENT BY ID
 // ============================================
 export async function getStudentById(id: string) {
+    await requireAuth();
     const result = await db
         .select()
         .from(students)
@@ -77,6 +82,7 @@ export async function getStudentById(id: string) {
 // GET STUDENT BY ADMISSION NUMBER
 // ============================================
 export async function getStudentByAdmissionNumber(admissionNumber: string) {
+    await requireAuth();
     const result = await db
         .select()
         .from(students)
@@ -90,6 +96,8 @@ export async function getStudentByAdmissionNumber(admissionNumber: string) {
 // CREATE STUDENT
 // ============================================
 export async function createStudent(data: Omit<NewStudent, "id" | "admissionNumber" | "createdAt" | "updatedAt">) {
+    const currentUser = await requireOperations();
+
     // Generate admission number
     const year = new Date().getFullYear();
     const countResult = await db
@@ -108,6 +116,16 @@ export async function createStudent(data: Omit<NewStudent, "id" | "admissionNumb
         })
         .returning();
 
+    // Log action
+    await createAuditLog({
+        userId: currentUser.id,
+        action: "CREATE",
+        entityType: "student",
+        entityId: result[0].id,
+        description: `Created new student ${result[0].firstName} ${result[0].lastName}`,
+        newValue: JSON.stringify(result[0]),
+    });
+
     revalidatePath("/operations/students");
     return { success: true, student: result[0] };
 }
@@ -119,6 +137,11 @@ export async function updateStudent(
     id: string,
     data: Partial<Omit<NewStudent, "id" | "admissionNumber" | "createdAt">>
 ) {
+    const currentUser = await requireOperations();
+
+    // Get old student data
+    const oldStudent = await db.select().from(students).where(eq(students.id, id)).limit(1);
+
     const result = await db
         .update(students)
         .set({
@@ -127,6 +150,26 @@ export async function updateStudent(
         })
         .where(eq(students.id, id))
         .returning();
+
+    // Log action
+    if (oldStudent.length > 0) {
+        // Determine changes
+        const changes = Object.keys(data).filter(key =>
+            data[key as keyof typeof data] !== oldStudent[0][key as keyof typeof oldStudent[0]]
+        );
+
+        if (changes.length > 0) {
+            await createAuditLog({
+                userId: currentUser.id,
+                action: "UPDATE",
+                entityType: "student",
+                entityId: id,
+                description: `Updated student ${result[0].firstName} ${result[0].lastName}: changed ${changes.join(", ")}`,
+                oldValue: JSON.stringify(oldStudent[0]),
+                newValue: JSON.stringify(data),
+            });
+        }
+    }
 
     revalidatePath("/operations/students");
     revalidatePath(`/operations/students/student/${id}`);
@@ -137,7 +180,11 @@ export async function updateStudent(
 // DELETE STUDENT (Soft delete)
 // ============================================
 export async function deleteStudent(id: string) {
-    const result = await db
+    const currentUser = await requireOperations();
+
+    const student = await db.select().from(students).where(eq(students.id, id)).limit(1);
+
+    await db
         .update(students)
         .set({
             isActive: false,
@@ -145,6 +192,17 @@ export async function deleteStudent(id: string) {
         })
         .where(eq(students.id, id))
         .returning();
+
+    // Log action
+    if (student.length > 0) {
+        await createAuditLog({
+            userId: currentUser.id,
+            action: "DEACTIVATE",
+            entityType: "student",
+            entityId: id,
+            description: `Deactivated student ${student[0].firstName} ${student[0].lastName} (${student[0].admissionNumber})`,
+        });
+    }
 
     revalidatePath("/operations/students");
     return { success: true };
@@ -158,6 +216,7 @@ export async function getStudentsCount(options?: {
     section?: string;
     academicYear?: string;
 }) {
+    await requireAuth();
     const { className, section, academicYear } = options || {};
     const conditions = [eq(students.isActive, true)];
 
@@ -183,6 +242,7 @@ export async function getStudentsCount(options?: {
 // GET CLASS STATISTICS
 // ============================================
 export async function getClassStatistics(academicYear?: string) {
+    await requireAuth();
     const year = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
     const result = await db
@@ -222,6 +282,7 @@ export async function getClassStatistics(academicYear?: string) {
 // GET DASHBOARD STATISTICS
 // ============================================
 export async function getDashboardStatistics() {
+    await requireAuth();
     const currentYear = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
     // Total students
@@ -284,6 +345,7 @@ export async function getDashboardStatistics() {
 // GET RECENT STUDENTS
 // ============================================
 export async function getRecentStudents(limit: number = 5) {
+    await requireAuth();
     const result = await db
         .select({
             id: students.id,

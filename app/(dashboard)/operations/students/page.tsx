@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Users,
     UserPlus,
     TrendingUp,
-    ChevronRight,
-    Eye,
 } from "lucide-react";
 import { requireOperations } from "@/lib/dal";
 import { getClassStatistics, getDashboardStatistics } from "@/lib/actions/students";
@@ -24,7 +22,7 @@ export default async function StudentsPage() {
     ]);
 
     // Build classes map from settings
-    const classesMap = new Map(
+    const classesMap = new Map<string, { id: string; name: string; sections: string[]; students: Record<string, number> }>(
         schoolClasses.map((cls: { name: string; sections: string[] }) => [
             cls.name,
             { id: cls.name, name: cls.name, sections: cls.sections, students: {} as Record<string, number> }

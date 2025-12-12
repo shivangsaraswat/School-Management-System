@@ -4,11 +4,14 @@ import { db } from "@/db";
 import { fees, feeTypes, students } from "@/db/schema";
 import { eq, and, sql, count, sum, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAuth, requireOperations } from "@/lib/dal";
+import { createAuditLog } from "@/lib/internal/audit";
 
 // ============================================
 // GET FEE STATISTICS
 // ============================================
 export async function getFeeStatistics(academicYear?: string) {
+    await requireOperations();
     const year = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
     // Total collected
@@ -46,6 +49,7 @@ export async function getFeeStatistics(academicYear?: string) {
 // GET FEES BY STUDENT
 // ============================================
 export async function getFeesByStudent(studentId: string) {
+    await requireAuth();
     const result = await db
         .select({
             id: fees.id,
@@ -74,6 +78,7 @@ export async function getFeesByStudent(studentId: string) {
 // GET RECENT FEE COLLECTIONS
 // ============================================
 export async function getRecentFeeCollections(limit: number = 5) {
+    await requireOperations();
     const result = await db
         .select({
             id: fees.id,
@@ -98,6 +103,7 @@ export async function getRecentFeeCollections(limit: number = 5) {
 // GET STUDENT FEE STATUS
 // ============================================
 export async function getStudentFeeStatus(studentId: string) {
+    await requireAuth();
     const result = await db
         .select({
             status: fees.status,
@@ -135,6 +141,8 @@ export async function createFeeRecord(data: {
     month: string;
     academicYear: string;
 }) {
+    const currentUser = await requireOperations();
+
     const result = await db
         .insert(fees)
         .values({
@@ -143,6 +151,16 @@ export async function createFeeRecord(data: {
             status: "pending",
         })
         .returning();
+
+    // Log action
+    await createAuditLog({
+        userId: currentUser.id,
+        action: "CREATE",
+        entityType: "fee",
+        entityId: result[0].id,
+        description: `Created fee record for month ${data.month} - Year ${data.academicYear}`,
+        newValue: JSON.stringify(result[0]),
+    });
 
     revalidatePath("/operations/fees");
     return { success: true, fee: result[0] };
@@ -159,6 +177,8 @@ export async function recordFeePayment(
         collectedBy: string;
     }
 ) {
+    const currentUser = await requireOperations();
+
     const feeRecord = await db.select().from(fees).where(eq(fees.id, feeId)).limit(1);
 
     if (!feeRecord.length) {
@@ -194,6 +214,17 @@ export async function recordFeePayment(
         })
         .where(eq(fees.id, feeId))
         .returning();
+
+    // Log action
+    await createAuditLog({
+        userId: currentUser.id,
+        action: "UPDATE",
+        entityType: "fee",
+        entityId: feeId,
+        description: `Fee payment recorded: ${paymentData.amount} (Receipt: ${receiptNumber})`,
+        oldValue: JSON.stringify(currentFee),
+        newValue: JSON.stringify(result[0]),
+    });
 
     revalidatePath("/operations/fees");
     return { success: true, fee: result[0], receiptNumber };

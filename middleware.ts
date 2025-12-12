@@ -36,12 +36,16 @@ export default auth((req) => {
     }
 
     // Redirect logged-in users away from login page
+    // BUT allow them to stay if there's an error (account deleted/deactivated)
     if (isLoggedIn && nextUrl.pathname === "/login") {
-        // Redirect students to their portal
-        if (userRole === ROLES.STUDENT) {
-            return NextResponse.redirect(new URL("/student/results", nextUrl));
+        const hasError = nextUrl.searchParams.has("error");
+        if (!hasError) {
+            // Redirect students to their portal
+            if (userRole === ROLES.STUDENT) {
+                return NextResponse.redirect(new URL("/student/results", nextUrl));
+            }
+            return NextResponse.redirect(new URL("/", nextUrl));
         }
-        return NextResponse.redirect(new URL("/", nextUrl));
     }
 
     // ==================================================

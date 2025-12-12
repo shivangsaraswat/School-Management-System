@@ -18,7 +18,8 @@ import {
     Trash2,
     AlertTriangle,
     RefreshCw,
-    UserX
+    UserX,
+    KeyRound
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -67,7 +68,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ROLES } from "@/lib/constants";
-import { createUser, deleteUser, updateUser, permanentlyDeleteUser, reactivateUser } from "@/lib/actions/users";
+import { createUser, deleteUser, updateUser, permanentlyDeleteUser, reactivateUser, regeneratePassword } from "@/lib/actions/users";
 
 type RoleType = "super_admin" | "admin" | "office_staff" | "teacher" | "student";
 
@@ -119,7 +120,26 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
     // New user credentials state (for displaying after creation)
     const [newUserCredentials, setNewUserCredentials] = useState<{ password: string, email: string } | null>(null);
 
-    const filteredUsers = users.filter(user => {
+    // Helper to check if user is a super admin (cannot be deleted/deactivated)
+    const isSuperAdmin = (role: string) => role === ROLES.SUPER_ADMIN;
+
+    // Sort users: Super Admin first, then Admin, then others
+    const sortedUsers = [...users].sort((a, b) => {
+        const roleOrder: Record<string, number> = {
+            [ROLES.SUPER_ADMIN]: 0,
+            [ROLES.ADMIN]: 1,
+            [ROLES.OFFICE_STAFF]: 2,
+            [ROLES.TEACHER]: 3,
+        };
+        const aOrder = roleOrder[a.role] ?? 4;
+        const bOrder = roleOrder[b.role] ?? 4;
+
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        // Within same role, sort by name
+        return a.name.localeCompare(b.name);
+    });
+
+    const filteredUsers = sortedUsers.filter(user => {
         const query = searchQuery.toLowerCase().trim();
         if (!query) return true;
 
@@ -281,6 +301,43 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
     const openDeleteConfirmation = (user: User) => {
         setDeleteConfirmUser(user);
         setIsDeleteDialogOpen(true);
+    };
+
+    // Password regeneration state
+    const [regeneratePasswordUser, setRegeneratePasswordUser] = useState<User | null>(null);
+    const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
+    const [regeneratedPassword, setRegeneratedPassword] = useState<string | null>(null);
+
+    const openRegeneratePasswordDialog = (user: User) => {
+        setRegeneratePasswordUser(user);
+        setRegeneratedPassword(null);
+        setIsRegenerateDialogOpen(true);
+    };
+
+    const handleRegeneratePassword = async () => {
+        if (!regeneratePasswordUser) return;
+
+        setIsRegenerating(true);
+        try {
+            const result = await regeneratePassword(regeneratePasswordUser.id);
+            if (result.success && result.newPassword) {
+                setRegeneratedPassword(result.newPassword);
+                toast.success("Password regenerated successfully");
+            } else {
+                toast.error(result.error || "Failed to regenerate password");
+            }
+        } catch {
+            toast.error("Failed to regenerate password");
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
+
+    const closeRegenerateDialog = () => {
+        setIsRegenerateDialogOpen(false);
+        setRegeneratePasswordUser(null);
+        setRegeneratedPassword(null);
     };
 
     const handleEditUser = (user: User) => {
@@ -618,7 +675,12 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
                                                         <AvatarFallback>{user.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                                                     </Avatar>
                                                     <div className={!user.isActive ? 'opacity-70' : ''}>
-                                                        <div className="font-medium">{user.name}</div>
+                                                        <div className="font-medium flex items-center gap-1.5">
+                                                            {user.name}
+                                                            {isSuperAdmin(user.role) && (
+                                                                <Shield className="h-3.5 w-3.5 text-purple-500" />
+                                                            )}
+                                                        </div>
                                                         <div className="text-xs text-muted-foreground">{user.email}</div>
                                                     </div>
                                                 </div>
@@ -661,31 +723,52 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
                                                             <Pencil className="mr-2 h-4 w-4" />
                                                             Edit Profile
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        {user.isActive ? (
-                                                            <DropdownMenuItem
-                                                                className="text-amber-600"
-                                                                onClick={() => openDeactivateConfirmation(user)}
-                                                            >
-                                                                <UserX className="mr-2 h-4 w-4" />
-                                                                Deactivate User
-                                                            </DropdownMenuItem>
-                                                        ) : (
-                                                            <DropdownMenuItem
-                                                                className="text-green-600"
-                                                                onClick={() => openReactivateConfirmation(user)}
-                                                            >
-                                                                <RefreshCw className="mr-2 h-4 w-4" />
-                                                                Reactivate User
-                                                            </DropdownMenuItem>
-                                                        )}
                                                         <DropdownMenuItem
-                                                            className="text-red-600"
-                                                            onClick={() => openDeleteConfirmation(user)}
+                                                            className="text-blue-600"
+                                                            onClick={() => openRegeneratePasswordDialog(user)}
                                                         >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete Permanently
+                                                            <KeyRound className="mr-2 h-4 w-4" />
+                                                            Regenerate Password
                                                         </DropdownMenuItem>
+                                                        {/* Super Admin cannot be deactivated or deleted */}
+                                                        {!isSuperAdmin(user.role) && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                {user.isActive ? (
+                                                                    <DropdownMenuItem
+                                                                        className="text-amber-600"
+                                                                        onClick={() => openDeactivateConfirmation(user)}
+                                                                    >
+                                                                        <UserX className="mr-2 h-4 w-4" />
+                                                                        Deactivate User
+                                                                    </DropdownMenuItem>
+                                                                ) : (
+                                                                    <DropdownMenuItem
+                                                                        className="text-green-600"
+                                                                        onClick={() => openReactivateConfirmation(user)}
+                                                                    >
+                                                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                                                        Reactivate User
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                                <DropdownMenuItem
+                                                                    className="text-red-600"
+                                                                    onClick={() => openDeleteConfirmation(user)}
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete Permanently
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+                                                        {isSuperAdmin(user.role) && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-1.5">
+                                                                    <Shield className="h-3 w-3" />
+                                                                    Protected account
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </td>
@@ -1012,6 +1095,87 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
                         >
                             {isReactivating ? "Reactivating..." : "Reactivate User"}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Regenerate Password Dialog */}
+            <Dialog open={isRegenerateDialogOpen} onOpenChange={setIsRegenerateDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-blue-600">
+                            <KeyRound className="h-5 w-5" />
+                            Regenerate Password
+                        </DialogTitle>
+                        <DialogDescription>
+                            {regeneratedPassword
+                                ? "A new password has been generated. Make sure to save it securely."
+                                : "Generate a new password for this user."
+                            }
+                        </DialogDescription>
+                    </DialogHeader>
+                    {regeneratePasswordUser && (
+                        <div className="py-4">
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${regeneratePasswordUser.name}`} />
+                                    <AvatarFallback>{regeneratePasswordUser.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">{regeneratePasswordUser.name}</p>
+                                    <p className="text-sm text-muted-foreground">{regeneratePasswordUser.email}</p>
+                                </div>
+                            </div>
+
+                            {regeneratedPassword ? (
+                                <div className="mt-4 space-y-3">
+                                    <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                                        <p className="text-xs font-medium text-green-700 mb-2">New Password Generated</p>
+                                        <div className="flex items-center gap-2">
+                                            <code className="flex-1 p-2 bg-white rounded border border-green-200 text-sm font-mono">
+                                                {regeneratedPassword}
+                                            </code>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(regeneratedPassword);
+                                                    toast.success("Password copied to clipboard");
+                                                }}
+                                            >
+                                                <Copy className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                                        <p className="text-xs text-amber-700 flex items-start gap-2">
+                                            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                                            <span>Please share this password securely with the user. They should change it upon first login.</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                                    <p className="text-sm text-blue-700">
+                                        This will generate a new random password and the user will need to use it for their next login.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={closeRegenerateDialog}>
+                            {regeneratedPassword ? "Close" : "Cancel"}
+                        </Button>
+                        {!regeneratedPassword && (
+                            <Button
+                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                                onClick={handleRegeneratePassword}
+                                disabled={isRegenerating}
+                            >
+                                {isRegenerating ? "Generating..." : "Generate New Password"}
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
