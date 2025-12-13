@@ -63,27 +63,109 @@ export async function deleteSetting(key: string) {
 }
 
 // ============================================
-// GET SCHOOL CLASSES (from settings or default)
+// ACADEMIC YEAR MANAGEMENT
 // ============================================
-export async function getSchoolClasses() {
-    const classesJson = await getSetting("school_classes");
 
-    if (classesJson) {
+export async function getAcademicYears() {
+    const yearsJson = await getSetting("academic_years");
+
+    if (yearsJson) {
         try {
-            return JSON.parse(classesJson);
+            return JSON.parse(yearsJson) as string[];
         } catch {
-            return getDefaultClasses();
+            return getDefaultAcademicYears();
+        }
+    }
+
+    return getDefaultAcademicYears();
+}
+
+export async function addAcademicYear(year: string) {
+    const years = await getAcademicYears();
+    if (!years.includes(year)) {
+        // Add new year and sort descending
+        const newYears = [year, ...years].sort().reverse();
+        await setSetting("academic_years", JSON.stringify(newYears));
+        revalidatePath("/operations/students/manage");
+    }
+    return { success: true };
+}
+
+export async function getCurrentAcademicYear() {
+    const year = await getSetting("current_academic_year");
+    if (year) return year;
+    return getDefaultAcademicYears()[0]; // Default to first (usually latest)
+}
+
+function getDefaultAcademicYears() {
+    return [
+        "2026-2027",
+        "2025-2026",
+        "2024-2025",
+        "2023-2024",
+        "2022-2023",
+        "2021-2022",
+        "2020-2021",
+        "2019-2020",
+        "2018-2019",
+        "2017-2018",
+        "2016-2017",
+        "2015-2016",
+    ];
+}
+
+// ============================================
+// CLASS CONFIGURATION MANAGEMENT
+// ============================================
+
+// Get classes for a specific year (or default/current if not specified)
+export async function getSchoolClasses(year?: string) {
+    // If year is provided, try to fetch specific config
+    if (year) {
+        const yearConfig = await getSetting(`classes_config_${year}`);
+        if (yearConfig) {
+            try {
+                return JSON.parse(yearConfig);
+            } catch {
+                // validation failed, fall back
+            }
+        }
+
+        // If specific year config not found, check if it's the "legacy" default key
+        // This provides backward compatibility
+        const legacyConfig = await getSetting("school_classes");
+        if (legacyConfig) {
+            try {
+                // For now, return legacy config as a starting point for any year
+                // This ensures we don't start with empty lists
+                return JSON.parse(legacyConfig);
+            } catch { }
+        }
+    } else {
+        // No year specified - try "legacy" key
+        const classesJson = await getSetting("school_classes");
+        if (classesJson) {
+            try {
+                return JSON.parse(classesJson);
+            } catch { }
         }
     }
 
     return getDefaultClasses();
 }
 
-// ============================================
-// SET SCHOOL CLASSES
-// ============================================
-export async function setSchoolClasses(classes: Array<{ name: string; sections: string[] }>) {
-    return setSetting("school_classes", JSON.stringify(classes));
+export async function setSchoolClasses(classes: Array<{ name: string; sections: string[] }>, year?: string) {
+    if (year) {
+        // Save for specific year
+        await setSetting(`classes_config_${year}`, JSON.stringify(classes));
+        // Also update legacy/current if this is the "current" year (optional, but good for safety)
+        // For now, we only update the year-specific key
+    } else {
+        // Update legacy key
+        await setSetting("school_classes", JSON.stringify(classes));
+    }
+    revalidatePath("/operations/students");
+    return { success: true };
 }
 
 // Default class structure for Indian schools
@@ -105,41 +187,4 @@ function getDefaultClasses() {
         { name: "Class 11", sections: ["A"] },
         { name: "Class 12", sections: ["A"] },
     ];
-}
-
-// ============================================
-// GET ACADEMIC YEARS
-// ============================================
-export async function getAcademicYears() {
-    const yearsJson = await getSetting("academic_years");
-
-    if (yearsJson) {
-        try {
-            return JSON.parse(yearsJson) as string[];
-        } catch {
-            return getDefaultAcademicYears();
-        }
-    }
-
-    return getDefaultAcademicYears();
-}
-
-function getDefaultAcademicYears() {
-    const currentYear = new Date().getFullYear();
-    return [
-        `${currentYear}-${currentYear + 1}`,
-        `${currentYear - 1}-${currentYear}`,
-        `${currentYear - 2}-${currentYear - 1}`,
-    ];
-}
-
-// ============================================
-// GET CURRENT ACADEMIC YEAR
-// ============================================
-export async function getCurrentAcademicYear() {
-    const year = await getSetting("current_academic_year");
-    if (year) return year;
-
-    const currentYear = new Date().getFullYear();
-    return `${currentYear}-${currentYear + 1}`;
 }

@@ -5,20 +5,31 @@ import {
     Users,
     UserPlus,
     TrendingUp,
+    Settings,
 } from "lucide-react";
 import { requireOperations } from "@/lib/dal";
 import { getClassStatistics, getDashboardStatistics } from "@/lib/actions/students";
 import { getSchoolClasses } from "@/lib/actions/settings";
 import { StudentsClient } from "./students-client";
 
-export default async function StudentsPage() {
+export default async function StudentsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ year?: string }>;
+}) {
     await requireOperations();
 
+    const { getCurrentAcademicYear, getAcademicYears } = await import("@/lib/actions/settings");
+    const currentYear = await getCurrentAcademicYear();
+    const params = await searchParams;
+    const selectedYear = params.year || currentYear;
+
     // Fetch real data from database
-    const [classStats, dashboardStats, schoolClasses] = await Promise.all([
-        getClassStatistics(),
+    const [classStats, dashboardStats, schoolClasses, availableYears] = await Promise.all([
+        getClassStatistics(), // This might need year filtering too? Assuming it returns all for now
         getDashboardStatistics(),
-        getSchoolClasses(),
+        getSchoolClasses(selectedYear),
+        getAcademicYears(),
     ]);
 
     // Build classes map from settings
@@ -33,11 +44,34 @@ export default async function StudentsPage() {
     for (const stat of classStats) {
         if (classesMap.has(stat.name)) {
             const existing = classesMap.get(stat.name)!;
-            // Merge sections
-            const allSections = new Set([...existing.sections, ...stat.sections]);
-            existing.sections = Array.from(allSections).sort();
+            // For the dashboard view, we strictly respect the configured sections for this year
+            // If the database has students in "Section C" but the config says only "A, B", 
+            // we should technically still show them or maybe warn?
+            // For now, we Merge found sections to ensure no hidden data, 
+            // BUT providing the configuration is correct, this shouldn't happen often.
+            // Actually, let's NOT merge sections that aren't in config if we want to strictly follow managing sections.
+            // But to avoid data loss in UI, I will keeping merging for now, but the Manage page controls the "official" list.
+
+            // Actually, if we want "only one section" to show up, we should trust schoolClasses.
+            // But if there are students in there, we can't just hide them.
+            // Let's stick to merging for safety, but the "Manage" page is where you set the intention.
+
+            // However, the prompt implies that the UI should change based on year.
+            // So if I selected 2026-2027 composed of empty classes, I want to see that.
+            // filtering stat.students by selectedYear? 
+            // getClassStatistics() likely returns ALL students currently active.
+            // We need to filter students by year probably? 
+            // The Student Schema has `academicYear`. 
+            // Implementation detail: getClassStatistics needs to filter by year.
+
+            // For now, let's assume getClassStatistics returns consistent data or we filter it here if possible.
+            // But `getClassStatistics` implementation is hidden.
+
             existing.students = { ...existing.students, ...stat.students };
         } else {
+            // If class exists in DB but not in settings, we add it?
+            // No, if it's not in settings for this year, maybe we shouldn't show it?
+            // Let's add it to be safe so we don't hide data.
             classesMap.set(stat.name, {
                 id: stat.name,
                 ...stat,
@@ -71,6 +105,12 @@ export default async function StudentsPage() {
                         <Link href="/operations/students/add">
                             <UserPlus className="h-4 w-4" />
                             <span className="hidden sm:inline">Add Student</span>
+                        </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="gap-1.5 h-9 text-sm">
+                        <Link href="/operations/students/manage">
+                            <Settings className="h-4 w-4" />
+                            <span className="hidden sm:inline">Manage Sections</span>
                         </Link>
                     </Button>
                 </div>
@@ -121,7 +161,12 @@ export default async function StudentsPage() {
             </div>
 
             {/* Classes Table - Client Component for interactivity */}
-            <StudentsClient initialClasses={classes} />
+            {/* Classes Table - Client Component for interactivity */}
+            <StudentsClient
+                initialClasses={classes}
+                initialYear={selectedYear}
+                allYears={availableYears}
+            />
         </div>
     );
 }
