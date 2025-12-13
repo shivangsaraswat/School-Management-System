@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { ROLES, type Role } from "@/lib/constants";
 import {
     canAccessAdmin,
@@ -13,6 +14,20 @@ import {
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+
+// Helper to clear all auth session cookies
+async function clearSessionCookies() {
+    const cookieStore = await cookies();
+    // NextAuth v5 (Auth.js) uses these cookie names
+    cookieStore.delete("authjs.session-token");
+    cookieStore.delete("__Secure-authjs.session-token");
+    // Also clear any callback URL cookies
+    cookieStore.delete("authjs.callback-url");
+    cookieStore.delete("__Secure-authjs.callback-url");
+    // Clear CSRF token
+    cookieStore.delete("authjs.csrf-token");
+    cookieStore.delete("__Secure-authjs.csrf-token");
+}
 
 // Verify user still exists in database and is active
 async function verifyUserInDatabase(userId: string): Promise<{ exists: boolean; isActive: boolean; role?: string }> {
@@ -63,13 +78,15 @@ export async function requireAuth() {
     const dbStatus = await verifyUserInDatabase(session.user.id);
 
     if (!dbStatus.exists) {
-        // User was deleted from database - redirect to login with error
-        // Session will be invalid, user needs to re-authenticate
+        // User was deleted from database - clear their session and redirect
+        // This ensures they don't get stuck in a redirect loop
+        await clearSessionCookies();
         redirect("/login?error=account_deleted");
     }
 
     if (!dbStatus.isActive) {
-        // User was deactivated - redirect to login with error
+        // User was deactivated - clear their session and redirect
+        await clearSessionCookies();
         redirect("/login?error=account_deactivated");
     }
 

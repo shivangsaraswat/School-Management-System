@@ -38,6 +38,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (isOnDashboard) {
                 return isLoggedIn;
             } else if (isLoggedIn && isOnAuth) {
+                // If there is an error (e.g. account_deleted), allow access to login page
+                // so the user can see the error message
+                if (request.nextUrl.searchParams.get("error")) {
+                    return true;
+                }
                 return Response.redirect(new URL("/", request.nextUrl));
             }
             return true;
@@ -64,8 +69,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     .where(eq(users.email, email))
                     .limit(1);
 
-                if (!user.length || !user[0].isActive) {
+                // User doesn't exist - return null (shows "Invalid credentials")
+                // We don't reveal that the account was deleted for security
+                if (!user.length) {
                     return null;
+                }
+
+                // User exists but is deactivated - throw specific error
+                if (!user[0].isActive) {
+                    throw new Error("account_deactivated");
                 }
 
                 const passwordMatch = await compare(password, user[0].password);

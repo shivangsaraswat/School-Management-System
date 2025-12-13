@@ -60,7 +60,12 @@ function LoginContent() {
             });
 
             if (result?.error) {
-                toast.error("Invalid email or password");
+                // Check if it's a deactivated account error
+                if (result.error.includes("account_deactivated") || result.code === "account_deactivated") {
+                    toast.error("Your account has been deactivated. Please contact an administrator.");
+                } else {
+                    toast.error("Invalid email or password");
+                }
                 setIsLoading(false);
                 return;
             }
