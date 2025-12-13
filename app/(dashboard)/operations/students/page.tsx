@@ -81,6 +81,37 @@ export default async function StudentsPage({
 
     const classes = Array.from(classesMap.values());
 
+    // Sort classes with custom order: Nursery -> LKG -> UKG -> Class 1 -> Class 2...
+    const specialClasses: Record<string, number> = {
+        "Nursery": 0,
+        "LKG": 1,
+        "UKG": 2
+    };
+
+    classes.sort((a, b) => {
+        // Handle special classes first
+        const orderA = specialClasses[a.name];
+        const orderB = specialClasses[b.name];
+
+        if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+        if (orderA !== undefined) return -1;
+        if (orderB !== undefined) return 1;
+
+        // Handle numeric classes "Class X"
+        const getNum = (str: string) => {
+            const match = str.match(/Class\s+(\d+)/i);
+            return match ? parseInt(match[1]) : 999;
+        };
+
+        const numA = getNum(a.name);
+        const numB = getNum(b.name);
+
+        if (numA !== numB) return numA - numB;
+
+        // Fallback to alphabetical for anything else
+        return a.name.localeCompare(b.name);
+    });
+
     // Calculate totals
     const totalStudents = dashboardStats.totalStudents;
     const totalClasses = classes.length;

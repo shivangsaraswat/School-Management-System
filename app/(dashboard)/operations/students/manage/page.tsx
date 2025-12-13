@@ -25,6 +25,33 @@ export default async function ManageClassesPage({
     // Note: getSchoolClasses handles the logic of falling back to legacy config if year specific config is missing
     const classesConfig = await getSchoolClasses(yearToEdit);
 
+    // Sort classes for display consistency
+    const specialClasses: Record<string, number> = {
+        "Nursery": 0,
+        "LKG": 1,
+        "UKG": 2
+    };
+
+    classesConfig.sort((a: { name: string }, b: { name: string }) => {
+        const orderA = specialClasses[a.name];
+        const orderB = specialClasses[b.name];
+
+        if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+        if (orderA !== undefined) return -1;
+        if (orderB !== undefined) return 1;
+
+        const getNum = (str: string) => {
+            const match = str.match(/Class\s+(\d+)/i);
+            return match ? parseInt(match[1]) : 999;
+        };
+
+        const numA = getNum(a.name);
+        const numB = getNum(b.name);
+
+        if (numA !== numB) return numA - numB;
+        return a.name.localeCompare(b.name);
+    });
+
     return (
         <div className="space-y-6 container mx-auto py-6 max-w-5xl animate-fade-in">
             <ManageClient
