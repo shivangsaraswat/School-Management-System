@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ function LoginContent() {
     const callbackUrl = searchParams.get("callbackUrl") || "/";
     const error = searchParams.get("error");
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Show error messages for account issues
     useEffect(() => {
@@ -102,7 +103,7 @@ function LoginContent() {
 
             <div className="flex flex-col space-y-4 mb-10">
                 <h1 className="text-[32px] font-bold text-[#0f172a] leading-tight">
-                    Log in to the Admin
+                    Log in to the School
                     <br />
                     Dashboard
                 </h1>
@@ -141,13 +142,25 @@ function LoginContent() {
                         </div>
                         <Input
                             id="password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
                             autoComplete="current-password"
                             disabled={isLoading}
-                            className="h-[68px] pt-7 pb-2 px-4 bg-[#f8fafc] border-transparent focus:bg-white focus:ring-0 focus:border-[#e2e8f0] rounded-2xl text-[15px] font-medium text-[#0f172a] placeholder:text-muted-foreground/50 transition-all shadow-none"
+                            className="h-[68px] pt-7 pb-2 px-4 pr-12 bg-[#f8fafc] border-transparent focus:bg-white focus:ring-0 focus:border-[#e2e8f0] rounded-2xl text-[15px] font-medium text-[#0f172a] placeholder:text-muted-foreground/50 transition-all shadow-none"
                             {...register("password")}
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#0f172a] transition-colors"
+                            tabIndex={-1}
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                            ) : (
+                                <Eye className="h-5 w-5" />
+                            )}
+                        </button>
                         {errors.password && (
                             <p className="border-l-2 border-destructive pl-2 mt-2 text-sm text-destructive font-medium">
                                 {errors.password.message}
@@ -191,13 +204,7 @@ function LoginContent() {
                     </div>
                 </div>
             </form>
-            <div className="mt-10 p-5 bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Demo Credentials</p>
-                <div className="flex flex-col gap-1">
-                    <code className="text-sm text-gray-700 bg-white px-2 py-1 rounded border border-gray-200 w-fit">admin@school.com</code>
-                    <code className="text-sm text-gray-700 bg-white px-2 py-1 rounded border border-gray-200 w-fit">admin123</code>
-                </div>
-            </div>
+
         </div>
     );
 }
