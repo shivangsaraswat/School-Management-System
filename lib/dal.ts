@@ -30,7 +30,7 @@ async function clearSessionCookies() {
 }
 
 // Verify user still exists in database and is active
-async function verifyUserInDatabase(userId: string): Promise<{ exists: boolean; isActive: boolean; role?: string }> {
+async function verifyUserInDatabase(userId: string): Promise<{ exists: boolean; isActive: boolean; role?: string; dbError?: boolean }> {
     try {
         const user = await db
             .select({ id: users.id, isActive: users.isActive, role: users.role })
@@ -43,9 +43,12 @@ async function verifyUserInDatabase(userId: string): Promise<{ exists: boolean; 
         }
 
         return { exists: true, isActive: user[0].isActive, role: user[0].role };
-    } catch {
-        // If database check fails, assume user doesn't exist for security
-        return { exists: false, isActive: false };
+    } catch (error) {
+        // If database check fails, DON'T assume user doesn't exist
+        // This prevents redirect loops on temporary DB issues
+        // Instead, allow the request to proceed with session data
+        console.error("Database verification error:", error);
+        return { exists: true, isActive: true, dbError: true };
     }
 }
 

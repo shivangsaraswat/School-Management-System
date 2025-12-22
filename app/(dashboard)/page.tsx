@@ -43,12 +43,19 @@ export default async function DashboardPage() {
         redirect("/student/results");
     }
 
+    // Check if user can access academics (for attendance stats)
+    // Teachers are already redirected, so anyone reaching here who is NOT office_staff can access
+    const canAccessAttendance = user.role !== ROLES.OFFICE_STAFF;
+
     // Fetch real data from database
+    // Note: Attendance stats require academics access, so we conditionally fetch
     const [dashboardStats, teachersCount, feeStats, attendanceStats, recentStudents] = await Promise.all([
         getDashboardStatistics(),
         getTeachersCount(),
         getFeeStatistics(),
-        getTodayAttendanceStats(),
+        canAccessAttendance
+            ? getTodayAttendanceStats()
+            : Promise.resolve({ present: 0, absent: 0, late: 0, leave: 0, total: 0, percentage: "0" }),
         getRecentStudents(3),
     ]);
 

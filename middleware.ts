@@ -8,9 +8,11 @@ const operationsRoutes = ["/operations"]; // Super Admin, Admin, Office Staff
 const academicsRoutes = ["/academics"]; // Super Admin, Admin, Teacher
 const studentRoutes = ["/student"]; // Student only
 const profileRoutes = ["/profile"]; // All authenticated users
+const dashboardRoutes = ["/"]; // All authenticated users except students
 
 // All protected routes combined
 const protectedRoutes = [
+    ...dashboardRoutes,
     ...adminOnlyRoutes,
     ...operationsRoutes,
     ...academicsRoutes,
@@ -24,8 +26,9 @@ export default auth((req) => {
     const userRole = req.auth?.user?.role;
 
     // Check if it's a protected route
+    // Special handling for "/" which needs exact match, others use startsWith
     const isProtectedRoute = protectedRoutes.some((route) =>
-        nextUrl.pathname.startsWith(route)
+        route === "/" ? nextUrl.pathname === "/" : nextUrl.pathname.startsWith(route)
     );
 
     // Redirect to login if accessing protected route without auth
