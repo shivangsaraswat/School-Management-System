@@ -58,13 +58,16 @@ const rolePermissions: Record<Role, Permission[]> = {
         "enter_marks",
         "view_own_classes",
     ],
-    // Office Staff - Operations only, NO revenue access
+    // Office Staff - Operations AND Academics access
     [ROLES.OFFICE_STAFF]: [
         "view_students",
         "manage_students",
         "manage_admissions",
         "manage_fees",
         "collect_fees",
+        "manage_attendance",
+        "enter_marks",
+        "view_own_classes",
     ],
     // Teacher - Only their class students
     [ROLES.TEACHER]: [
@@ -113,9 +116,9 @@ export function canAccessOperations(role: Role): boolean {
     return ([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OFFICE_STAFF] as Role[]).includes(role);
 }
 
-// Academic routes - Super Admin, Admin, Teacher
+// Academic routes - Super Admin, Admin, Office Staff, Teacher
 export function canAccessAcademics(role: Role): boolean {
-    return ([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER] as Role[]).includes(role);
+    return ([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OFFICE_STAFF, ROLES.TEACHER] as Role[]).includes(role);
 }
 
 // Student routes - Students only

@@ -76,7 +76,7 @@ export default auth((req) => {
         return NextResponse.redirect(new URL("/", nextUrl));
     }
 
-    // Academics routes - Super Admin, Admin, Teacher
+    // Academics routes - Super Admin, Admin, Office Staff, Teacher
     const isAcademicsRoute = academicsRoutes.some((route) =>
         nextUrl.pathname.startsWith(route)
     );
@@ -84,6 +84,7 @@ export default auth((req) => {
         isAcademicsRoute &&
         userRole !== ROLES.SUPER_ADMIN &&
         userRole !== ROLES.ADMIN &&
+        userRole !== ROLES.OFFICE_STAFF &&
         userRole !== ROLES.TEACHER
     ) {
         return NextResponse.redirect(new URL("/", nextUrl));
