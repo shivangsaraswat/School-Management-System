@@ -6,6 +6,7 @@ import { eq, and, like, or, count, sql, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireAuth, requireOperations } from "@/lib/dal";
 import { createAuditLog } from "@/lib/internal/audit";
+import { autoCreateFeeAccountForStudent } from "./fee-accounts";
 import type { NewStudent } from "@/db/schema";
 
 // ============================================
@@ -125,6 +126,18 @@ export async function createStudent(data: Omit<NewStudent, "id" | "admissionNumb
         description: `Created new student ${result[0].firstName} ${result[0].lastName}`,
         newValue: JSON.stringify(result[0]),
     });
+
+    // Auto-create fee account for the new student
+    try {
+        await autoCreateFeeAccountForStudent(
+            result[0].id,
+            result[0].className,
+            result[0].academicYear
+        );
+    } catch (error) {
+        // Don't fail student creation if fee account creation fails
+        console.error("Failed to auto-create fee account:", error);
+    }
 
     revalidatePath("/operations/students");
     return { success: true, student: result[0] };

@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { requireOperations } from "@/lib/dal";
 import { getStudentById } from "@/lib/actions/students";
-import { getFeesByStudent, getStudentFeeStatus } from "@/lib/actions/fees";
+import { getStudentFeeHistory } from "@/lib/actions/fee-accounts";
+import { getStudentFeeAccount } from "@/lib/actions/fee-accounts";
 import { getStudentAttendanceHistory, getAttendancePercentage } from "@/lib/actions/attendance";
+import { getCurrentAcademicYear } from "@/lib/actions/settings";
 import { StudentProfileClient } from "./student-profile-client";
 
 interface PageProps {
@@ -13,6 +15,7 @@ export default async function StudentProfilePage({ params }: PageProps) {
     await requireOperations();
 
     const { studentId } = await params;
+    const currentYear = await getCurrentAcademicYear();
 
     // Fetch student data from database
     const student = await getStudentById(studentId);
@@ -22,9 +25,9 @@ export default async function StudentProfilePage({ params }: PageProps) {
     }
 
     // Fetch related data in parallel
-    const [fees, feeStatus, attendanceHistory, attendancePercentage] = await Promise.all([
-        getFeesByStudent(studentId),
-        getStudentFeeStatus(studentId),
+    const [feeAccount, feeHistory, attendanceHistory, attendancePercentage] = await Promise.all([
+        getStudentFeeAccount(studentId, currentYear),
+        getStudentFeeHistory(studentId, currentYear),
         getStudentAttendanceHistory(studentId, { limit: 30 }),
         getAttendancePercentage(studentId),
     ]);
@@ -41,8 +44,9 @@ export default async function StudentProfilePage({ params }: PageProps) {
     return (
         <StudentProfileClient
             student={student}
-            fees={fees}
-            feeStatus={feeStatus}
+            currentYear={currentYear}
+            feeAccount={feeAccount}
+            feeHistory={feeHistory}
             attendanceHistory={attendanceHistory}
             attendanceStats={{
                 present: attendanceStats["present"] || 0,

@@ -8,6 +8,7 @@ import {
     uuid,
     date,
     pgEnum,
+    json,
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -42,6 +43,14 @@ export const inquiryStatusEnum = pgEnum("inquiry_status", [
 ]);
 
 export const genderEnum = pgEnum("gender", ["Male", "Female", "Other"]);
+
+export const paymentModeEnum = pgEnum("payment_mode", [
+    "cash",
+    "upi",
+    "bank_transfer",
+    "cheque",
+    "online",
+]);
 
 // ============================================
 // USERS TABLE - Staff accounts
@@ -137,6 +146,84 @@ export const fees = pgTable("fees", {
     collectedBy: uuid("collected_by").references(() => users.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================
+// FEE STRUCTURES TABLE - Balance-based fee definitions per class/year
+// ============================================
+export const feeStructures = pgTable("fee_structures", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    academicYear: text("academic_year").notNull(),
+    className: text("class_name").notNull(),
+    totalFee: decimal("total_fee", { precision: 10, scale: 2 }).notNull(),
+    // Optional breakdown stored as JSON text
+    breakdown: text("breakdown"), // JSON: { tuition, transport, exam, misc }
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================
+// STUDENT FEE ACCOUNTS TABLE - Per-student ledger
+// ============================================
+export const studentFeeAccounts = pgTable("student_fee_accounts", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studentId: uuid("student_id")
+        .notNull()
+        .references(() => students.id, { onDelete: "cascade" }),
+    academicYear: text("academic_year").notNull(),
+    totalFee: decimal("total_fee", { precision: 10, scale: 2 }).notNull(),
+    totalPaid: decimal("total_paid", { precision: 10, scale: 2 }).notNull().default("0"),
+    balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
+    status: feeStatusEnum("status").notNull().default("pending"),
+    paidMonths: json("paid_months").$type<string[]>().default([]),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================
+// FEE TRANSACTIONS TABLE - Immutable payment records
+// ============================================
+export const feeTransactions = pgTable("fee_transactions", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studentId: uuid("student_id")
+        .notNull()
+        .references(() => students.id, { onDelete: "cascade" }),
+    feeAccountId: uuid("fee_account_id")
+        .notNull()
+        .references(() => studentFeeAccounts.id, { onDelete: "cascade" }),
+    academicYear: text("academic_year").notNull(),
+    amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).notNull(),
+    paymentMode: paymentModeEnum("payment_mode").notNull(),
+    receiptNumber: text("receipt_number").notNull().unique(),
+    paymentFor: text("payment_for"), // Optional: "Monthly", "Quarterly", "Exam Fee", etc.
+    paidMonths: json("paid_months").$type<string[]>().default([]),
+    remarks: text("remarks"),
+    collectedBy: uuid("collected_by")
+        .notNull()
+        .references(() => users.id),
+    transactionDate: timestamp("transaction_date").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ============================================
+// FEE ADJUSTMENTS TABLE - Discounts, refunds, exceptions
+// ============================================
+export const feeAdjustments = pgTable("fee_adjustments", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studentId: uuid("student_id")
+        .notNull()
+        .references(() => students.id, { onDelete: "cascade" }),
+    feeAccountId: uuid("fee_account_id")
+        .notNull()
+        .references(() => studentFeeAccounts.id, { onDelete: "cascade" }),
+    academicYear: text("academic_year").notNull(),
+    amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Positive = add, Negative = deduct
+    reason: text("reason").notNull(),
+    approvedBy: uuid("approved_by")
+        .notNull()
+        .references(() => users.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // ============================================
@@ -272,6 +359,14 @@ export type Student = typeof students.$inferSelect;
 export type NewStudent = typeof students.$inferInsert;
 export type FeeType = typeof feeTypes.$inferSelect;
 export type Fee = typeof fees.$inferSelect;
+export type FeeStructure = typeof feeStructures.$inferSelect;
+export type NewFeeStructure = typeof feeStructures.$inferInsert;
+export type StudentFeeAccount = typeof studentFeeAccounts.$inferSelect;
+export type NewStudentFeeAccount = typeof studentFeeAccounts.$inferInsert;
+export type FeeTransaction = typeof feeTransactions.$inferSelect;
+export type NewFeeTransaction = typeof feeTransactions.$inferInsert;
+export type FeeAdjustment = typeof feeAdjustments.$inferSelect;
+export type NewFeeAdjustment = typeof feeAdjustments.$inferInsert;
 export type Attendance = typeof attendance.$inferSelect;
 export type Exam = typeof exams.$inferSelect;
 export type Mark = typeof marks.$inferSelect;

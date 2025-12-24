@@ -94,24 +94,38 @@ export async function addAcademicYear(year: string) {
 export async function getCurrentAcademicYear() {
     const year = await getSetting("current_academic_year");
     if (year) return year;
-    return getDefaultAcademicYears()[0]; // Default to first (usually latest)
+    return calculateCurrentAcademicYear();
+}
+
+// Calculate current academic year based on date
+// Indian academic year runs April to March
+// If current month is Jan-Mar, academic year is (prevYear)-(currentYear)
+// If current month is Apr-Dec, academic year is (currentYear)-(nextYear)
+function calculateCurrentAcademicYear(): string {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed, Jan=0, Dec=11
+
+    if (currentMonth < 3) {
+        // Jan-Mar: Academic year started in previous year
+        return `${currentYear - 1}-${currentYear}`;
+    } else {
+        // Apr-Dec: Academic year started in current year
+        return `${currentYear}-${currentYear + 1}`;
+    }
 }
 
 function getDefaultAcademicYears() {
-    return [
-        "2026-2027",
-        "2025-2026",
-        "2024-2025",
-        "2023-2024",
-        "2022-2023",
-        "2021-2022",
-        "2020-2021",
-        "2019-2020",
-        "2018-2019",
-        "2017-2018",
-        "2016-2017",
-        "2015-2016",
-    ];
+    const currentAcademicYear = calculateCurrentAcademicYear();
+    const [startYear] = currentAcademicYear.split("-").map(Number);
+
+    // Generate 10 years: 2 future + current + 7 past
+    const years: string[] = [];
+    for (let i = -2; i <= 7; i++) {
+        const year = startYear - i;
+        years.push(`${year}-${year + 1}`);
+    }
+    return years;
 }
 
 // ============================================
