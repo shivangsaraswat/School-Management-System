@@ -4,7 +4,7 @@ import { getStudentById } from "@/lib/actions/students";
 import { getStudentFeeHistory } from "@/lib/actions/fee-accounts";
 import { getStudentFeeAccount } from "@/lib/actions/fee-accounts";
 import { getStudentAttendanceHistory, getAttendancePercentage } from "@/lib/actions/attendance";
-import { getCurrentAcademicYear } from "@/lib/actions/settings";
+import { getCurrentAcademicYear, getSectionsForClass } from "@/lib/actions/settings";
 import { StudentProfileClient } from "./student-profile-client";
 
 interface PageProps {
@@ -25,11 +25,12 @@ export default async function StudentProfilePage({ params }: PageProps) {
     }
 
     // Fetch related data in parallel
-    const [feeAccount, feeHistory, attendanceHistory, attendancePercentage] = await Promise.all([
+    const [feeAccount, feeHistory, attendanceHistory, attendancePercentage, allSections] = await Promise.all([
         getStudentFeeAccount(studentId, currentYear),
         getStudentFeeHistory(studentId, currentYear),
         getStudentAttendanceHistory(studentId, { limit: 30 }),
         getAttendancePercentage(studentId),
+        getSectionsForClass(student.className, currentYear),
     ]);
 
     // Calculate attendance stats from history
@@ -55,6 +56,7 @@ export default async function StudentProfilePage({ params }: PageProps) {
                 leave: attendanceStats["leave"] || 0,
                 percentage: attendancePercentage,
             }}
+            allSections={allSections}
         />
     );
 }

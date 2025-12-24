@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { updateStudent } from "@/lib/actions/students";
 import type { Student, StudentFeeAccount, FeeTransaction, FeeAdjustment } from "@/db/schema";
 import { format } from "date-fns";
+import { formatClassSection } from "@/lib/utils";
 
 interface StudentProfileClientProps {
     student: Student;
@@ -59,6 +60,7 @@ interface StudentProfileClientProps {
         leave: number;
         percentage: string;
     };
+    allSections: string[];
 }
 
 const paymentModeLabels: Record<string, string> = {
@@ -76,6 +78,7 @@ export function StudentProfileClient({
     feeHistory,
     attendanceHistory,
     attendanceStats,
+    allSections,
 }: StudentProfileClientProps) {
     const router = useRouter();
 
@@ -187,7 +190,7 @@ export function StudentProfileClient({
                             <h1 className="text-3xl font-bold tracking-tight">{student.firstName} {student.lastName}</h1>
                             <div className="flex items-center gap-2 mt-2 text-muted-foreground flex-wrap">
                                 <Badge variant="outline" className="text-sm font-normal py-1 px-3 bg-background">
-                                    {student.className} - {student.section}
+                                    {formatClassSection(student.className, student.section, { allSections })}
                                 </Badge>
                                 <Separator orientation="vertical" className="h-4" />
                                 <span className="flex items-center gap-1 text-sm">

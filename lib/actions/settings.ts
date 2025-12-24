@@ -202,3 +202,13 @@ function getDefaultClasses() {
         { name: "Class 12", sections: ["A"] },
     ];
 }
+
+// ============================================
+// GET SECTIONS FOR A SPECIFIC CLASS
+// ============================================
+export async function getSectionsForClass(className: string, year?: string): Promise<string[]> {
+    const classes = await getSchoolClasses(year);
+    const classConfig = classes.find((c: { name: string; sections: string[] }) => c.name === className);
+    return classConfig?.sections || ["A"];
+}
+

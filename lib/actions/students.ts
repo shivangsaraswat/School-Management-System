@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { students } from "@/db/schema";
-import { eq, and, like, or, count, sql, desc, asc } from "drizzle-orm";
+import { eq, and, like, ilike, or, count, sql, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireAuth, requireOperations } from "@/lib/dal";
 import { createAuditLog } from "@/lib/internal/audit";
@@ -45,9 +45,9 @@ export async function getStudents(options?: {
     if (search) {
         conditions.push(
             or(
-                like(students.firstName, `%${search}%`),
-                like(students.lastName, `%${search}%`),
-                like(students.admissionNumber, `%${search}%`)
+                ilike(students.firstName, `%${search}%`),
+                ilike(students.lastName, `%${search}%`),
+                ilike(students.admissionNumber, `%${search}%`)
             )
         );
     }

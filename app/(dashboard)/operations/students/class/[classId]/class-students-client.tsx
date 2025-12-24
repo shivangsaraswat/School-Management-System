@@ -26,6 +26,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { Student } from "@/db/schema";
+import { formatClassSection } from "@/lib/utils";
 
 interface StudentWithFeeStatus extends Student {
     feeStatus: string;
@@ -39,6 +40,7 @@ interface ClassStudentsClientProps {
     boysCount: number;
     girlsCount: number;
     feePendingCount: number;
+    allSections: string[];
 }
 
 export function ClassStudentsClient({
@@ -49,6 +51,7 @@ export function ClassStudentsClient({
     boysCount,
     girlsCount,
     feePendingCount,
+    allSections,
 }: ClassStudentsClientProps) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
@@ -89,7 +92,7 @@ export function ClassStudentsClient({
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
-                            {className} - Section {section}
+                            {formatClassSection(className, section, { allSections })}
                         </h1>
                         <p className="text-muted-foreground">
                             {students.length} students enrolled • {academicYear}

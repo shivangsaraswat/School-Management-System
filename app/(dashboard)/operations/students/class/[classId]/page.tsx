@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireOperations } from "@/lib/dal";
 import { getStudents, getStudentsCount } from "@/lib/actions/students";
 import { getStudentFeeStatus } from "@/lib/actions/fees";
+import { getSectionsForClass } from "@/lib/actions/settings";
 import { ClassStudentsClient } from "./class-students-client";
 
 interface PageProps {
@@ -53,10 +54,12 @@ export default async function ClassStudentsPage({ params, searchParams }: PagePr
         })
     );
 
-    // Calculate stats
     const boysCount = students.filter(s => s.gender === "Male").length;
     const girlsCount = students.filter(s => s.gender === "Female").length;
     const feePendingCount = studentsWithFeeStatus.filter(s => s.feeStatus !== "paid").length;
+
+    // Get all sections for this class to determine if section should be shown
+    const allSections = await getSectionsForClass(className, academicYear);
 
     return (
         <ClassStudentsClient
@@ -67,6 +70,7 @@ export default async function ClassStudentsPage({ params, searchParams }: PagePr
             boysCount={boysCount}
             girlsCount={girlsCount}
             feePendingCount={feePendingCount}
+            allSections={allSections}
         />
     );
 }

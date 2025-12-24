@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { formatClassDisplay } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Search, Loader2 } from "lucide-react";
+import { getStudents } from "@/lib/actions/students";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverAnchor,
+} from "@/components/ui/popover";
 import {
     Select,
     SelectContent,
@@ -25,6 +40,88 @@ interface StudentsClientProps {
     initialClasses: ClassItem[];
     initialYear: string;
     allYears: string[];
+}
+
+function StudentSearch() {
+    const router = useRouter();
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState("");
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!query) {
+            setData([]);
+            setOpen(false);
+            return;
+        }
+
+        const delayDebounceFn = setTimeout(async () => {
+            setLoading(true);
+            try {
+                // Determine year? For global search, we might not pass year, or pass "all".
+                // getStudents with no params searches all.
+                const results = await getStudents({ search: query, limit: 5 });
+                setData(results);
+                setOpen(true);
+            } catch (error) {
+                console.error("Search failed", error);
+            } finally {
+                setLoading(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [query]);
+
+    return (
+        <div className="w-full md:w-[400px]">
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverAnchor asChild>
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground opacity-50" />
+                        <Input
+                            placeholder="Search by name or admission no..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onFocus={() => { if (query && data.length > 0) setOpen(true); }}
+                            className="pl-9 h-9 bg-background"
+                        />
+                    </div>
+                </PopoverAnchor>
+                <PopoverContent
+                    className="p-0 w-[400px]"
+                    align="start"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
+                    <Command shouldFilter={false}>
+                        <CommandList>
+                            {loading && <div className="p-4 text-xs text-muted-foreground text-center flex items-center justify-center"><Loader2 className="h-3 w-3 animate-spin mr-1" /> Searching...</div>}
+                            {!loading && query && data.length === 0 && (
+                                <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">No student found.</CommandEmpty>
+                            )}
+                            <CommandGroup>
+                                {data.map((student) => (
+                                    <CommandItem
+                                        key={student.id}
+                                        value={student.id}
+                                        onSelect={() => {
+                                            setOpen(false);
+                                            router.push(`/operations/students/student/${student.id}`);
+                                        }}
+                                        className="flex flex-col items-start gap-1 p-2 cursor-pointer aria-selected:bg-muted"
+                                    >
+                                        <span className="font-medium">{student.firstName} {student.lastName}</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase">{student.admissionNumber} • {formatClassDisplay(student.className, student.section)}</span>
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+        </div>
+    );
 }
 
 export function StudentsClient({ initialClasses, initialYear, allYears }: StudentsClientProps) {
@@ -48,10 +145,11 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
 
     return (
         <>
-            {/* Year Selector */}
-            <div className="flex justify-end">
+            {/* Year Selector & Search */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+                <StudentSearch />
                 <Select value={initialYear} onValueChange={handleYearChange}>
-                    <SelectTrigger className="w-[140px] h-9 text-sm">
+                    <SelectTrigger className="w-full md:w-[140px] h-9 text-sm">
                         <SelectValue placeholder="Select Year" />
                     </SelectTrigger>
                     <SelectContent>
@@ -90,26 +188,28 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
                             </CardHeader>
 
                             <CardContent className="px-4 pb-4 space-y-4">
-                                {/* Compact Section Selector */}
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-lg border border-border/40 overflow-x-auto no-scrollbar">
-                                        {cls.sections.map((section) => (
-                                            <button
-                                                key={section}
-                                                onClick={() => handleSectionChange(cls.id, section)}
-                                                className={`
-                                                    flex-1 min-w-[2rem] h-7 rounded-md text-xs font-semibold transition-all duration-200
-                                                    ${selectedSections[cls.id] === section
-                                                        ? "bg-white dark:bg-zinc-800 text-primary shadow-sm ring-1 ring-black/5 dark:ring-white/10"
-                                                        : "text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 hover:text-foreground"
-                                                    }
-                                                `}
-                                            >
-                                                {section}
-                                            </button>
-                                        ))}
+                                {/* Compact Section Selector - Only show if more than 1 section */}
+                                {cls.sections.length > 1 && (
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-lg border border-border/40 overflow-x-auto no-scrollbar">
+                                            {cls.sections.map((section) => (
+                                                <button
+                                                    key={section}
+                                                    onClick={() => handleSectionChange(cls.id, section)}
+                                                    className={`
+                                                        flex-1 min-w-[2rem] h-7 rounded-md text-xs font-semibold transition-all duration-200
+                                                        ${selectedSections[cls.id] === section
+                                                            ? "bg-white dark:bg-zinc-800 text-primary shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+                                                            : "text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 hover:text-foreground"
+                                                        }
+                                                    `}
+                                                >
+                                                    {section}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Compact Stats & Action */}
                                 <div className="flex items-center justify-between gap-3">
@@ -119,7 +219,9 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
                                         </span>
                                         <div className="flex flex-col leading-none">
                                             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Students</span>
-                                            <span className="text-[10px] text-muted-foreground/70">in Sec {currentSection}</span>
+                                            {cls.sections.length > 1 && (
+                                                <span className="text-[10px] text-muted-foreground/70">in Sec {currentSection}</span>
+                                            )}
                                         </div>
                                     </div>
 
@@ -141,3 +243,4 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
         </>
     );
 }
+
