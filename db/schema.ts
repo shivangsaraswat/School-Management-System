@@ -352,6 +352,80 @@ export const documents = pgTable("documents", {
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ============================================
+// TEACHERS TABLE - Standalone teacher records (like students)
+// ============================================
+export const teachers = pgTable("teachers", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    // Optional user account link (only if teacher needs login)
+    userId: uuid("user_id")
+        .unique()
+        .references(() => users.id, { onDelete: "set null" }),
+    // Core identity fields (standalone - no user required)
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    photo: text("photo"),
+    isActive: boolean("is_active").notNull().default(true),
+    // Employee info
+    employeeId: text("employee_id").notNull().unique(),
+    dateOfBirth: date("date_of_birth"),
+    gender: genderEnum("gender"),
+    bloodGroup: text("blood_group"),
+    // Address
+    address: text("address"),
+    city: text("city"),
+    state: text("state"),
+    pincode: text("pincode"),
+    // Professional
+    qualifications: text("qualifications"),
+    specialization: text("specialization"),
+    experience: integer("experience"),
+    joiningDate: date("joining_date"),
+    salary: decimal("salary", { precision: 10, scale: 2 }),
+    // Emergency contact
+    emergencyContact: text("emergency_contact"),
+    emergencyPhone: text("emergency_phone"),
+    // Timestamps
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================
+// TEACHER DOCUMENTS TABLE - Document storage for teachers
+// ============================================
+export const teacherDocuments = pgTable("teacher_documents", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    teacherId: uuid("teacher_id")
+        .notNull()
+        .references(() => teachers.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    type: text("type").notNull(), // id_proof, certificate, contract, other
+    url: text("url").notNull(),
+    size: integer("size").notNull(),
+    uploadedBy: uuid("uploaded_by")
+        .notNull()
+        .references(() => users.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ============================================
+// TEACHER CLASS ASSIGNMENTS TABLE - Class-Teacher linking
+// ============================================
+export const teacherClassAssignments = pgTable("teacher_class_assignments", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    teacherId: uuid("teacher_id")
+        .notNull()
+        .references(() => teachers.id, { onDelete: "cascade" }),
+    className: text("class_name").notNull(),
+    section: text("section").notNull(),
+    subject: text("subject"),
+    isClassTeacher: boolean("is_class_teacher").notNull().default(false),
+    academicYear: text("academic_year").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -374,3 +448,10 @@ export type Inquiry = typeof inquiries.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type Document = typeof documents.$inferSelect;
+export type Teacher = typeof teachers.$inferSelect;
+export type NewTeacher = typeof teachers.$inferInsert;
+export type TeacherDocument = typeof teacherDocuments.$inferSelect;
+export type NewTeacherDocument = typeof teacherDocuments.$inferInsert;
+export type TeacherClassAssignment = typeof teacherClassAssignments.$inferSelect;
+export type NewTeacherClassAssignment = typeof teacherClassAssignments.$inferInsert;
+

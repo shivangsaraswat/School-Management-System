@@ -59,6 +59,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
         checkAccess: canAccessOperations,
         items: [
             { title: "Students", url: "/operations/students", icon: Users },
+            { title: "Teachers", url: "/operations/teachers", icon: GraduationCap },
             { title: "Admissions", url: "/operations/admissions", icon: UserPlus },
             { title: "Fees", url: "/operations/fees", icon: Receipt },
         ],
