@@ -143,7 +143,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                                 asChild
                                                 isActive={isActive}
                                                 tooltip={item.title}
-                                                className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-gray-100"
+                                                className="text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                             >
                                                 <Link href={item.url}>
                                                     <item.icon className="size-4" />
