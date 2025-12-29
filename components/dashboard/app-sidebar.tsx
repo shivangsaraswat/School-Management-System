@@ -158,11 +158,8 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                     </SidebarGroup>
                 ))}
             </SidebarContent>
-            <SidebarFooter className="p-3">
-                <div className="text-xs text-muted-foreground/60 text-center">
-                    v1.0.0
-                </div>
-            </SidebarFooter>
+            <SidebarFooter className="p-3" />
+
             <SidebarRail />
         </Sidebar>
     )
