@@ -1,8 +1,6 @@
-import { notFound } from "next/navigation";
 import { requireOperations } from "@/lib/dal";
-import { getStudents, getStudentsCount } from "@/lib/actions/students";
+import { getStudents } from "@/lib/actions/students";
 import { getStudentFeeStatus } from "@/lib/actions/fees";
-import { getSectionsForClass } from "@/lib/actions/settings";
 import { ClassStudentsClient } from "./class-students-client";
 
 interface PageProps {
@@ -16,16 +14,8 @@ export default async function ClassStudentsPage({ params, searchParams }: PagePr
     const { classId } = await params;
     const { year } = await searchParams;
 
-    // Decode the classId (format: "ClassName-Section")
-    const decodedClassId = decodeURIComponent(classId);
-    const lastDashIndex = decodedClassId.lastIndexOf("-");
-
-    if (lastDashIndex === -1) {
-        notFound();
-    }
-
-    const className = decodedClassId.substring(0, lastDashIndex);
-    const section = decodedClassId.substring(lastDashIndex + 1);
+    // Decode the classId (now just the class name, no section)
+    const className = decodeURIComponent(classId);
 
     // Determine academic year
     const currentYear = new Date().getFullYear();
@@ -36,10 +26,9 @@ export default async function ClassStudentsPage({ params, searchParams }: PagePr
 
     const academicYear = year || defaultYear;
 
-    // Fetch students for this class and section
+    // Fetch students for this class (sections no longer used)
     const students = await getStudents({
         className,
-        section,
         academicYear,
     });
 
@@ -58,19 +47,14 @@ export default async function ClassStudentsPage({ params, searchParams }: PagePr
     const girlsCount = students.filter(s => s.gender === "Female").length;
     const feePendingCount = studentsWithFeeStatus.filter(s => s.feeStatus !== "paid").length;
 
-    // Get all sections for this class to determine if section should be shown
-    const allSections = await getSectionsForClass(className, academicYear);
-
     return (
         <ClassStudentsClient
             className={className}
-            section={section}
             academicYear={academicYear}
             students={studentsWithFeeStatus}
             boysCount={boysCount}
             girlsCount={girlsCount}
             feePendingCount={feePendingCount}
-            allSections={allSections}
         />
     );
 }

@@ -46,7 +46,6 @@ const classes = [
     { id: "Class 11", name: "Class 11" },
     { id: "Class 12", name: "Class 12" },
 ];
-const sections = ["A", "B", "C"];
 const genders = ["Male", "Female", "Other"] as const;
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -54,7 +53,6 @@ function AddStudentForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const preselectedClass = searchParams.get("class") || "";
-    const preselectedSection = searchParams.get("section") || "";
 
     // Get current academic year
     const currentYear = new Date().getFullYear();
@@ -77,7 +75,6 @@ function AddStudentForm() {
         state: "",
         pincode: "",
         className: preselectedClass,
-        section: preselectedSection,
         admissionDate: new Date().toISOString().split("T")[0],
         guardianName: "",
         guardianRelation: "",
@@ -98,9 +95,9 @@ function AddStudentForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate required fields
+        // Validate required fields (section no longer required)
         if (!formData.firstName || !formData.lastName || !formData.dateOfBirth ||
-            !formData.gender || !formData.className || !formData.section ||
+            !formData.gender || !formData.className ||
             !formData.guardianName || !formData.guardianRelation || !formData.guardianPhone) {
             toast.error("Please fill in all required fields");
             return;
@@ -122,7 +119,7 @@ function AddStudentForm() {
                 state: formData.state || null,
                 pincode: formData.pincode || null,
                 className: formData.className,
-                section: formData.section,
+                section: "", // Section no longer used
                 academicYear,
                 admissionDate: formData.admissionDate,
                 guardianName: formData.guardianName,
@@ -134,7 +131,7 @@ function AddStudentForm() {
 
             if (result.success) {
                 toast.success("Student added successfully!", {
-                    description: `${formData.firstName} ${formData.lastName} has been enrolled in ${formData.className} - Section ${formData.section}`,
+                    description: `${formData.firstName} ${formData.lastName} has been enrolled in ${formData.className}`,
                 });
                 router.push("/operations/students");
             } else {
@@ -341,7 +338,7 @@ function AddStudentForm() {
                         </CardTitle>
                         <CardDescription>Class and admission details</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-3">
+                    <CardContent className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-2">
                             <Label htmlFor="className">Class <span className="text-destructive">*</span></Label>
                             <Select
@@ -355,23 +352,6 @@ function AddStudentForm() {
                                 <SelectContent>
                                     {classes.map(c => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="section">Section <span className="text-destructive">*</span></Label>
-                            <Select
-                                value={formData.section}
-                                onValueChange={(val) => handleSelectChange("section", val)}
-                                required
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select section" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {sections.map(s => (
-                                        <SelectItem key={s} value={s}>Section {s}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

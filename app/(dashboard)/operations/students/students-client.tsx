@@ -7,8 +7,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { getStudents } from "@/lib/actions/students";
+import type { Student } from "@/db/schema";
 import {
     Command,
     CommandEmpty,
@@ -32,8 +33,9 @@ import {
 interface ClassItem {
     id: string;
     name: string;
-    sections: string[];
-    students: Record<string, number>;
+    sections: string[]; // Kept for backward compatibility, but not used
+    students: Record<string, number>; // Kept for backward compatibility
+    studentCount?: number; // New field - total students in class
 }
 
 interface StudentsClientProps {
@@ -46,7 +48,7 @@ function StudentSearch() {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<Student[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -59,8 +61,6 @@ function StudentSearch() {
         const delayDebounceFn = setTimeout(async () => {
             setLoading(true);
             try {
-                // Determine year? For global search, we might not pass year, or pass "all".
-                // getStudents with no params searches all.
                 const results = await getStudents({ search: query, limit: 5 });
                 setData(results);
                 setOpen(true);
@@ -112,7 +112,7 @@ function StudentSearch() {
                                         className="flex flex-col items-start gap-1 p-2 cursor-pointer aria-selected:bg-muted"
                                     >
                                         <span className="font-medium">{student.firstName} {student.lastName}</span>
-                                        <span className="text-[10px] text-muted-foreground uppercase">{student.admissionNumber} • {formatClassDisplay(student.className, student.section)}</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase">{student.admissionNumber} • {formatClassDisplay(student.className)}</span>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
@@ -126,20 +126,8 @@ function StudentSearch() {
 
 export function StudentsClient({ initialClasses, initialYear, allYears }: StudentsClientProps) {
     const router = useRouter();
-    const [selectedSections, setSelectedSections] = useState<Record<string, string>>(() => {
-        const initial: Record<string, string> = {};
-        initialClasses.forEach(cls => {
-            initial[cls.id] = cls.sections[0] || "A";
-        });
-        return initial;
-    });
-
-    const handleSectionChange = (classId: string, section: string) => {
-        setSelectedSections(prev => ({ ...prev, [classId]: section }));
-    };
 
     const handleYearChange = (year: string) => {
-        // Navigate to update URL and trigger server-side data refresh
         router.push(`?year=${year}`, { scroll: false });
     };
 
@@ -163,9 +151,8 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
             {/* Classes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {initialClasses.map((cls) => {
-                    const totalStudents = Object.values(cls.students).reduce((a, b) => a + b, 0);
-                    const currentSection = selectedSections[cls.id] || cls.sections[0];
-                    const sectionStudents = cls.students[currentSection] || 0;
+                    // Get student count - use new studentCount or fallback to summing students
+                    const totalStudents = cls.studentCount ?? Object.values(cls.students).reduce((a, b) => a + b, 0);
 
                     return (
                         <Card key={cls.id} className="group hover:shadow-md transition-all duration-300 border-border/50 overflow-hidden relative">
@@ -188,40 +175,14 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
                             </CardHeader>
 
                             <CardContent className="px-4 pb-4 space-y-4">
-                                {/* Compact Section Selector - Only show if more than 1 section */}
-                                {cls.sections.length > 1 && (
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-lg border border-border/40 overflow-x-auto no-scrollbar">
-                                            {cls.sections.map((section) => (
-                                                <button
-                                                    key={section}
-                                                    onClick={() => handleSectionChange(cls.id, section)}
-                                                    className={`
-                                                        flex-1 min-w-[2rem] h-7 rounded-md text-xs font-semibold transition-all duration-200
-                                                        ${selectedSections[cls.id] === section
-                                                            ? "bg-white dark:bg-zinc-800 text-primary shadow-sm ring-1 ring-black/5 dark:ring-white/10"
-                                                            : "text-muted-foreground hover:bg-white/50 dark:hover:bg-zinc-800/50 hover:text-foreground"
-                                                        }
-                                                    `}
-                                                >
-                                                    {section}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Compact Stats & Action */}
+                                {/* Stats & Action */}
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-baseline gap-1.5 pl-1">
                                         <span className="text-2xl font-bold text-foreground tracking-tight">
-                                            {sectionStudents}
+                                            {totalStudents}
                                         </span>
                                         <div className="flex flex-col leading-none">
                                             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Students</span>
-                                            {cls.sections.length > 1 && (
-                                                <span className="text-[10px] text-muted-foreground/70">in Sec {currentSection}</span>
-                                            )}
                                         </div>
                                     </div>
 
@@ -230,7 +191,7 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
                                         size="sm"
                                         className="h-8 px-4 text-xs font-medium shadow-sm active:scale-95 transition-all"
                                     >
-                                        <Link href={`/operations/students/class/${encodeURIComponent(cls.name)}-${currentSection}?year=${initialYear}`}>
+                                        <Link href={`/operations/students/class/${encodeURIComponent(cls.name)}?year=${initialYear}`}>
                                             View Details
                                         </Link>
                                     </Button>
@@ -243,4 +204,3 @@ export function StudentsClient({ initialClasses, initialYear, allYears }: Studen
         </>
     );
 }
-

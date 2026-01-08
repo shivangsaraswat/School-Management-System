@@ -119,9 +119,13 @@ function getDefaultAcademicYears() {
     const currentAcademicYear = calculateCurrentAcademicYear();
     const [startYear] = currentAcademicYear.split("-").map(Number);
 
-    // Generate 10 years: 2 future + current + 7 past
+    // Generate years: current + next (for planning) + 8 past years
+    // Maximum future year allowed is current+1 (e.g., if current is 2025-2026, max is 2026-2027)
     const years: string[] = [];
-    for (let i = -2; i <= 7; i++) {
+    // Add next year (current+1) for planning purposes
+    years.push(`${startYear + 1}-${startYear + 2}`);
+    // Add current and past years
+    for (let i = 0; i <= 8; i++) {
         const year = startYear - i;
         years.push(`${year}-${year + 1}`);
     }
@@ -182,33 +186,32 @@ export async function setSchoolClasses(classes: Array<{ name: string; sections: 
     return { success: true };
 }
 
-// Default class structure for Indian schools
+// Default class structure for Indian schools (sections are no longer used)
 function getDefaultClasses() {
     return [
-        { name: "Nursery", sections: ["A"] },
-        { name: "LKG", sections: ["A", "B"] },
-        { name: "UKG", sections: ["A", "B"] },
-        { name: "Class 1", sections: ["A", "B", "C"] },
-        { name: "Class 2", sections: ["A", "B", "C"] },
-        { name: "Class 3", sections: ["A", "B"] },
-        { name: "Class 4", sections: ["A", "B"] },
-        { name: "Class 5", sections: ["A", "B", "C"] },
-        { name: "Class 6", sections: ["A", "B"] },
-        { name: "Class 7", sections: ["A", "B"] },
-        { name: "Class 8", sections: ["A", "B", "C"] },
-        { name: "Class 9", sections: ["A", "B"] },
-        { name: "Class 10", sections: ["A", "B", "C"] },
-        { name: "Class 11", sections: ["A"] },
-        { name: "Class 12", sections: ["A"] },
+        { name: "Nursery", sections: [] },
+        { name: "LKG", sections: [] },
+        { name: "UKG", sections: [] },
+        { name: "Class 1", sections: [] },
+        { name: "Class 2", sections: [] },
+        { name: "Class 3", sections: [] },
+        { name: "Class 4", sections: [] },
+        { name: "Class 5", sections: [] },
+        { name: "Class 6", sections: [] },
+        { name: "Class 7", sections: [] },
+        { name: "Class 8", sections: [] },
+        { name: "Class 9", sections: [] },
+        { name: "Class 10", sections: [] },
+        { name: "Class 11", sections: [] },
+        { name: "Class 12", sections: [] },
     ];
 }
 
 // ============================================
-// GET SECTIONS FOR A SPECIFIC CLASS
+// GET SECTIONS FOR A SPECIFIC CLASS (Deprecated - sections no longer used)
 // ============================================
-export async function getSectionsForClass(className: string, year?: string): Promise<string[]> {
-    const classes = await getSchoolClasses(year);
-    const classConfig = classes.find((c: { name: string; sections: string[] }) => c.name === className);
-    return classConfig?.sections || ["A"];
+export async function getSectionsForClass(_className: string, _year?: string): Promise<string[]> {
+    // Sections are no longer used - return empty array
+    return [];
 }
 

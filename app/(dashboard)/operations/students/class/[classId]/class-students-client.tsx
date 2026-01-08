@@ -26,7 +26,6 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { Student } from "@/db/schema";
-import { formatClassSection } from "@/lib/utils";
 
 interface StudentWithFeeStatus extends Student {
     feeStatus: string;
@@ -34,24 +33,20 @@ interface StudentWithFeeStatus extends Student {
 
 interface ClassStudentsClientProps {
     className: string;
-    section: string;
     academicYear: string;
     students: StudentWithFeeStatus[];
     boysCount: number;
     girlsCount: number;
     feePendingCount: number;
-    allSections: string[];
 }
 
 export function ClassStudentsClient({
     className,
-    section,
     academicYear,
     students,
     boysCount,
     girlsCount,
     feePendingCount,
-    allSections,
 }: ClassStudentsClientProps) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
@@ -92,14 +87,14 @@ export function ClassStudentsClient({
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
-                            {formatClassSection(className, section, { allSections })}
+                            {className}
                         </h1>
                         <p className="text-muted-foreground">
                             {students.length} students enrolled • {academicYear}
                         </p>
                     </div>
                     <Button className="gap-2" asChild>
-                        <Link href={`/operations/students/add?class=${encodeURIComponent(className)}&section=${section}`}>
+                        <Link href={`/operations/students/add?class=${encodeURIComponent(className)}`}>
                             <UserPlus className="h-4 w-4" />
                             Add Student
                         </Link>

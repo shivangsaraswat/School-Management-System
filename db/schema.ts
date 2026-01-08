@@ -89,7 +89,7 @@ export const students = pgTable("students", {
     pincode: text("pincode"),
     // Academic
     className: text("class_name").notNull(),
-    section: text("section").notNull(),
+    section: text("section").default(""),
     rollNumber: integer("roll_number"),
     academicYear: text("academic_year").notNull(),
     admissionDate: date("admission_date").notNull(),
@@ -419,7 +419,7 @@ export const teacherClassAssignments = pgTable("teacher_class_assignments", {
         .notNull()
         .references(() => teachers.id, { onDelete: "cascade" }),
     className: text("class_name").notNull(),
-    section: text("section").notNull(),
+    section: text("section").default(""),
     subject: text("subject"),
     isClassTeacher: boolean("is_class_teacher").notNull().default(false),
     academicYear: text("academic_year").notNull(),

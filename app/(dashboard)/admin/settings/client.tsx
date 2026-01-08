@@ -1,28 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Save, Building2, Calendar, Mail, Loader2 } from "lucide-react";
+import { Settings, Save, Building2, Calendar, Mail, Loader2, Plus, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { setSetting } from "@/lib/actions/settings";
+import { setSetting, addAcademicYear } from "@/lib/actions/settings";
 
 interface SettingsClientProps {
     initialSettings: Record<string, string>;
+    academicYears: string[];
+    currentAcademicYear: string;
 }
 
-export default function SettingsClient({ initialSettings }: SettingsClientProps) {
+export default function SettingsClient({ initialSettings, academicYears, currentAcademicYear }: SettingsClientProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [isAddingYear, setIsAddingYear] = useState(false);
+    const [newYear, setNewYear] = useState("");
     const [settings, setSettings] = useState({
         schoolName: initialSettings.school_name || "",
         shortName: initialSettings.school_short_name || "",
         address: initialSettings.school_address || "",
         phone: initialSettings.school_phone || "",
-        academicYear: initialSettings.current_academic_year || "",
+        academicYear: initialSettings.current_academic_year || currentAcademicYear,
         sessionStart: initialSettings.session_start_month || "April",
         feeDueDay: initialSettings.fee_due_day || "10",
         lateFee: initialSettings.late_fee_penalty || "5",
@@ -56,6 +61,54 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         } catch (error) {
             console.error("Error saving settings:", error);
             toast.error("Failed to save settings");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAddAcademicYear = async () => {
+        if (!newYear) {
+            toast.error("Please enter a valid academic year");
+            return;
+        }
+
+        // Validate format (e.g., 2027-2028)
+        const yearPattern = /^\d{4}-\d{4}$/;
+        if (!yearPattern.test(newYear)) {
+            toast.error("Please enter year in format YYYY-YYYY (e.g., 2027-2028)");
+            return;
+        }
+
+        const [start, end] = newYear.split("-").map(Number);
+        if (end !== start + 1) {
+            toast.error("End year must be start year + 1");
+            return;
+        }
+
+        setIsAddingYear(true);
+        try {
+            await addAcademicYear(newYear);
+            toast.success(`Academic year ${newYear} added successfully`);
+            setNewYear("");
+            router.refresh();
+        } catch (error) {
+            console.error("Error adding academic year:", error);
+            toast.error("Failed to add academic year");
+        } finally {
+            setIsAddingYear(false);
+        }
+    };
+
+    const handleSetCurrentYear = async (year: string) => {
+        setIsLoading(true);
+        try {
+            await setSetting("current_academic_year", year);
+            setSettings(prev => ({ ...prev, academicYear: year }));
+            toast.success(`Current academic year set to ${year}`);
+            router.refresh();
+        } catch (error) {
+            console.error("Error setting current year:", error);
+            toast.error("Failed to set current year");
         } finally {
             setIsLoading(false);
         }
@@ -127,28 +180,84 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                 </CardContent>
             </Card>
 
-            {/* Academic Settings */}
+            {/* Academic Session Management */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
-                        Academic Settings
+                        Academic Sessions
                     </CardTitle>
                     <CardDescription>
-                        Configure academic year and session details
+                        Manage academic years and create new sessions
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="academicYear">Current Academic Year</Label>
-                            <Input
-                                id="academicYear"
-                                value={settings.academicYear}
-                                onChange={handleChange}
-                                placeholder="e.g., 2024-2025"
-                            />
+                <CardContent className="space-y-6">
+                    {/* Current Academic Year */}
+                    <div className="space-y-2">
+                        <Label>Current Academic Year</Label>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="default" className="text-sm px-3 py-1">
+                                {settings.academicYear || currentAcademicYear}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">(Active session)</span>
                         </div>
+                    </div>
+
+                    {/* Add New Academic Year */}
+                    <div className="space-y-2">
+                        <Label>Create New Academic Session</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                value={newYear}
+                                onChange={(e) => setNewYear(e.target.value)}
+                                placeholder="e.g., 2027-2028"
+                                className="max-w-[200px]"
+                            />
+                            <Button
+                                onClick={handleAddAcademicYear}
+                                disabled={isAddingYear || !newYear}
+                                size="sm"
+                            >
+                                {isAddingYear ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Plus className="h-4 w-4" />
+                                )}
+                                Add Year
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Create upcoming academic sessions. Format: YYYY-YYYY (e.g., 2027-2028)
+                        </p>
+                    </div>
+
+                    {/* Available Academic Years */}
+                    <div className="space-y-2">
+                        <Label>Available Academic Years</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {academicYears.map((year) => (
+                                <div
+                                    key={year}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm ${year === settings.academicYear
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-muted/50 hover:bg-muted cursor-pointer"
+                                        }`}
+                                    onClick={() => year !== settings.academicYear && handleSetCurrentYear(year)}
+                                >
+                                    {year}
+                                    {year === settings.academicYear && (
+                                        <Check className="h-3.5 w-3.5" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Click on a year to set it as the current academic session
+                        </p>
+                    </div>
+
+                    {/* Other Academic Settings */}
+                    <div className="grid gap-4 md:grid-cols-2 pt-4 border-t">
                         <div className="space-y-2">
                             <Label htmlFor="sessionStart">Session Start Month</Label>
                             <Input

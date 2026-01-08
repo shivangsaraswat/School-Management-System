@@ -256,36 +256,29 @@ export async function getStudentsCount(options?: {
 // ============================================
 export async function getClassStatistics(academicYear?: string) {
     await requireAuth();
-    const year = academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+    const { getCurrentAcademicYear } = await import("./settings");
+    const year = academicYear || await getCurrentAcademicYear();
 
     const result = await db
         .select({
             className: students.className,
-            section: students.section,
             count: count(),
         })
         .from(students)
         .where(and(eq(students.isActive, true), eq(students.academicYear, year)))
-        .groupBy(students.className, students.section)
-        .orderBy(students.className, students.section);
+        .groupBy(students.className)
+        .orderBy(students.className);
 
-    // Transform to the format needed by the UI
-    const classMap = new Map<string, { name: string; sections: string[]; students: Record<string, number> }>();
+    // Transform to the format needed by the UI (sections no longer used)
+    const classMap = new Map<string, { name: string; sections: string[]; students: Record<string, number>; studentCount: number }>();
 
     for (const row of result) {
-        if (!classMap.has(row.className)) {
-            classMap.set(row.className, {
-                name: row.className,
-                sections: [],
-                students: {},
-            });
-        }
-        const cls = classMap.get(row.className)!;
-        if (!cls.sections.includes(row.section)) {
-            cls.sections.push(row.section);
-            cls.sections.sort();
-        }
-        cls.students[row.section] = row.count;
+        classMap.set(row.className, {
+            name: row.className,
+            sections: [], // Empty - sections no longer used
+            students: { "": row.count }, // For backward compatibility
+            studentCount: row.count,
+        });
     }
 
     return Array.from(classMap.values());
@@ -294,9 +287,10 @@ export async function getClassStatistics(academicYear?: string) {
 // ============================================
 // GET DASHBOARD STATISTICS
 // ============================================
-export async function getDashboardStatistics() {
+export async function getDashboardStatistics(academicYear?: string) {
     await requireAuth();
-    const currentYear = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+    const { getCurrentAcademicYear } = await import("./settings");
+    const currentYear = academicYear || await getCurrentAcademicYear();
 
     // Total students
     const totalStudentsResult = await db

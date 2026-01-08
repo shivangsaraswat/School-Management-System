@@ -5,7 +5,6 @@ import {
     Users,
     UserPlus,
     TrendingUp,
-    Settings,
 } from "lucide-react";
 import { requireOperations } from "@/lib/dal";
 import { getClassStatistics, getDashboardStatistics } from "@/lib/actions/students";
@@ -26,8 +25,8 @@ export default async function StudentsPage({
 
     // Fetch real data from database
     const [classStats, dashboardStats, schoolClasses, availableYears] = await Promise.all([
-        getClassStatistics(), // This might need year filtering too? Assuming it returns all for now
-        getDashboardStatistics(),
+        getClassStatistics(selectedYear),
+        getDashboardStatistics(selectedYear),
         getSchoolClasses(selectedYear),
         getAcademicYears(),
     ]);
@@ -112,11 +111,9 @@ export default async function StudentsPage({
         return a.name.localeCompare(b.name);
     });
 
-    // Calculate totals
+    // Calculate totals (sections no longer used)
     const totalStudents = dashboardStats.totalStudents;
     const totalClasses = classes.length;
-    const totalSections = classes.reduce((acc, cls) => acc + cls.sections.length, 0);
-    const avgPerSection = totalSections > 0 ? Math.round(totalStudents / totalSections) : 0;
 
     return (
         <div className="space-y-4 md:space-y-6 animate-fade-in">
@@ -128,7 +125,7 @@ export default async function StudentsPage({
                         Students
                     </h1>
                     <p className="text-muted-foreground text-sm md:text-base">
-                        Manage student records by class and section
+                        Manage student records by class
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -136,12 +133,6 @@ export default async function StudentsPage({
                         <Link href="/operations/students/add">
                             <UserPlus className="h-4 w-4" />
                             <span className="hidden sm:inline">Add Student</span>
-                        </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="gap-1.5 h-9 text-sm">
-                        <Link href="/operations/students/manage">
-                            <Settings className="h-4 w-4" />
-                            <span className="hidden sm:inline">Manage Sections</span>
                         </Link>
                     </Button>
                 </div>
@@ -172,19 +163,19 @@ export default async function StudentsPage({
                 <Card className="relative overflow-hidden border shadow-sm">
                     <div className="absolute inset-0 bg-[radial-gradient(#00000008_1px,transparent_1px)] [background-size:16px_16px]" />
                     <CardContent className="p-4 md:p-5 relative z-10">
-                        <div className="text-xs md:text-sm font-medium text-muted-foreground">Total Sections</div>
-                        <div className="text-xl md:text-2xl font-bold mt-1 text-foreground">
-                            {totalSections}
+                        <div className="text-xs md:text-sm font-medium text-muted-foreground">Boys</div>
+                        <div className="text-xl md:text-2xl font-bold mt-1 text-blue-600">
+                            {dashboardStats.genderBreakdown?.Male || 0}
                         </div>
-                        <div className="text-xs md:text-sm text-muted-foreground">Across all classes</div>
+                        <div className="text-xs md:text-sm text-muted-foreground">Students</div>
                     </CardContent>
                 </Card>
                 <Card className="relative overflow-hidden border shadow-sm">
                     <div className="absolute inset-0 bg-[radial-gradient(#00000008_1px,transparent_1px)] [background-size:16px_16px]" />
                     <CardContent className="p-4 md:p-5 relative z-10">
-                        <div className="text-xs md:text-sm font-medium text-muted-foreground">Avg. per Section</div>
-                        <div className="text-xl md:text-2xl font-bold mt-1 text-foreground">
-                            {avgPerSection}
+                        <div className="text-xs md:text-sm font-medium text-muted-foreground">Girls</div>
+                        <div className="text-xl md:text-2xl font-bold mt-1 text-pink-600">
+                            {dashboardStats.genderBreakdown?.Female || 0}
                         </div>
                         <div className="text-xs md:text-sm text-muted-foreground">Students</div>
                     </CardContent>
