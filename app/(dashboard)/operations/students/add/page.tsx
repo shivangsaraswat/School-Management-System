@@ -16,7 +16,8 @@ import {
     Save,
     Loader2,
     Briefcase,
-    FileText
+    FileText,
+    X
 } from "lucide-react";
 import {
     Select,
@@ -262,9 +263,37 @@ function AddStudentForm() {
                 title="Add New Student"
                 description="Complete the form below to enroll a new student."
                 backLink={{ label: "Students", href: "/operations/students" }}
-            />
+            >
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="h-9" asChild>
+                        <Link href="/operations/students">
+                            <X className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Cancel</span>
+                        </Link>
+                    </Button>
+                    <Button
+                        form="add-student-form"
+                        type="submit"
+                        disabled={isSubmitting}
+                        size="sm"
+                        className="h-9"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                <span className="hidden sm:inline">Saving...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">Save & Enroll</span>
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </HeaderUpdater>
 
-            <form onSubmit={handleSubmit} className="space-y-8 max-w-6xl mx-auto px-4 mt-4">
+            <form id="add-student-form" onSubmit={handleSubmit} className="space-y-8 max-w-6xl mx-auto px-4 mt-4">
 
                 {/* 1. Personal Information */}
                 <Card className="rounded-sm shadow-none border bg-card">
@@ -665,25 +694,7 @@ function AddStudentForm() {
 
 
 
-                {/* Form Actions */}
-                <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-8 pb-20">
-                    <Button type="button" variant="outline" asChild size="lg" className="w-full sm:w-auto rounded-sm">
-                        <Link href="/operations/students">Cancel</Link>
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting} size="lg" className="w-full sm:w-auto min-w-[200px] rounded-sm">
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Saving Student...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="h-4 w-4 mr-2" />
-                                Save & Enroll Student
-                            </>
-                        )}
-                    </Button>
-                </div>
+
             </form >
         </div >
     );

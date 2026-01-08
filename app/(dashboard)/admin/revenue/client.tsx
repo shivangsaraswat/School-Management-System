@@ -87,13 +87,12 @@ export default function RevenueDashboardClient({ stats, monthlyData, classData }
             <HeaderUpdater
                 title="Revenue Dashboard"
                 description="Financial overview and fee collection analytics"
-            />
-            <div className="flex items-center justify-end">
-                <Button variant="outline">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export Report
+            >
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm">
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Export Report</span>
                 </Button>
-            </div>
+            </HeaderUpdater>
 
             {/* Stats Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

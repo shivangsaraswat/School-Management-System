@@ -230,9 +230,35 @@ export function TeacherProfileClient({
                 title="Teacher Profile"
                 description="Manage teacher details and class assignments"
                 backLink={{ label: "Teachers", href: "/operations/teachers" }}
-            />
+            >
+                <div className="flex gap-2">
+                    {isEditing ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9"
+                                onClick={() => setIsEditing(false)}
+                                disabled={isLoading}
+                            >
+                                <X className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">Cancel</span>
+                            </Button>
+                            <Button size="sm" className="h-9" onClick={handleSave} disabled={isLoading}>
+                                <Save className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">{isLoading ? "Saving..." : "Save Changes"}</span>
+                            </Button>
+                        </>
+                    ) : (
+                        <Button size="sm" className="h-9" onClick={() => setIsEditing(true)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Edit Profile</span>
+                        </Button>
+                    )}
+                </div>
+            </HeaderUpdater>
 
-            {/* Header */}
+            {/* Profile Info */}
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div className="flex items-start gap-4">
                     <Avatar className="h-20 w-20 border-2 border-primary/20">
@@ -273,29 +299,7 @@ export function TeacherProfileClient({
                     </div>
                 </div>
 
-                <div className="flex gap-2">
-                    {isEditing ? (
-                        <>
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsEditing(false)}
-                                disabled={isLoading}
-                            >
-                                <X className="h-4 w-4 mr-2" />
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSave} disabled={isLoading}>
-                                <Save className="h-4 w-4 mr-2" />
-                                {isLoading ? "Saving..." : "Save Changes"}
-                            </Button>
-                        </>
-                    ) : (
-                        <Button onClick={() => setIsEditing(true)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Profile
-                        </Button>
-                    )}
-                </div>
+
             </div>
 
             {/* Tabs */}

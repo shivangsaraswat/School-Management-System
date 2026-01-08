@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { getInquiries, getInquiryStatistics } from "@/lib/actions/inquiries";
 import { format } from "date-fns";
-import { HeaderUpdater } from "@/components/dashboard/header-context";
+import { AdmissionsHeader } from "./admissions-header";
 
 export default async function AdmissionsPage() {
     await requireOperations();
@@ -29,18 +29,7 @@ export default async function AdmissionsPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <HeaderUpdater
-                title="Admissions"
-                description="Manage admission inquiries and applications"
-            />
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-                <Button asChild>
-                    <Link href="/operations/admissions/new">
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Inquiry
-                    </Link>
-                </Button>
-            </div>
+            <AdmissionsHeader />
 
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-5">

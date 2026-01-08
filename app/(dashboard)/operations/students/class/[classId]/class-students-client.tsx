@@ -79,16 +79,14 @@ export function ClassStudentsClient({
                 title={className}
                 description={`${students.length} students enrolled • ${academicYear}`}
                 backLink={{ label: "Classes", href: "/admin/academics/classes" }}
-            />
-
-            <div className="flex justify-end gap-2">
-                <Button className="gap-2" asChild>
+            >
+                <Button className="gap-2" size="sm" asChild>
                     <Link href={`/operations/students/add?class=${encodeURIComponent(className)}`}>
                         <UserPlus className="h-4 w-4" />
-                        Add Student
+                        <span className="hidden sm:inline">Add Student</span>
                     </Link>
                 </Button>
-            </div>
+            </HeaderUpdater>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

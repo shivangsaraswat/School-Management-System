@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { Header } from "@/components/dashboard/header";
 import { HeaderProvider } from "@/components/dashboard/header-context";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { PageContainer } from "@/components/dashboard/page-container";
 
 export default async function DashboardLayout({
     children,
@@ -17,9 +18,9 @@ export default async function DashboardLayout({
                 <AppSidebar userRole={user.role} variant="inset" />
                 <SidebarInset>
                     <Header user={user} />
-                    <main className="flex flex-1 flex-col gap-6 p-6 pt-0">
+                    <PageContainer>
                         {children}
-                    </main>
+                    </PageContainer>
                 </SidebarInset>
             </HeaderProvider>
         </SidebarProvider>

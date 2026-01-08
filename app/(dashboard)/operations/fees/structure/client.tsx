@@ -246,18 +246,17 @@ export function FeeStructureClient({
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            {/* Header with Actions */}
             <HeaderUpdater
                 title="Fee Structure"
                 description="Define fee amounts per class for each academic year"
-            />
-            <div className="flex justify-end gap-2">
+            >
                 {/* Copy from Previous Year */}
                 <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" disabled={structures.length > 0}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy from Year
+                        <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm" disabled={structures.length > 0}>
+                            <Copy className="h-4 w-4" />
+                            <span className="hidden sm:inline">Copy from Year</span>
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -301,9 +300,9 @@ export function FeeStructureClient({
                 {/* Add Structure */}
                 <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button disabled={availableClasses.length === 0}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Structure
+                        <Button size="sm" className="gap-1.5 h-9 text-sm" disabled={availableClasses.length === 0}>
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:inline">Add Structure</span>
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -359,7 +358,7 @@ export function FeeStructureClient({
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            </div>
+            </HeaderUpdater>
 
             {/* Year Filter */}
             <div className="flex items-center gap-4">

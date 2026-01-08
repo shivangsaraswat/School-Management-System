@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { LogOut, User, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,6 +27,12 @@ interface UserNavProps {
 }
 
 export function UserNav({ user }: UserNavProps) {
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const handleSignOut = () => {
         signOut({ callbackUrl: "/login" });
     };
@@ -38,17 +45,25 @@ export function UserNav({ user }: UserNavProps) {
         student: "Student",
     };
 
+    const userAvatar = (
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+                <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {getInitials(user.name)}
+                </AvatarFallback>
+            </Avatar>
+        </Button>
+    );
+
+    if (!isMounted) {
+        return userAvatar;
+    }
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                            {getInitials(user.name)}
-                        </AvatarFallback>
-                    </Avatar>
-                </Button>
+                {userAvatar}
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal p-3">

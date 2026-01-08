@@ -117,11 +117,20 @@ export default function SettingsClient({ initialSettings, academicYears, current
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Header */}
+            {/* Header with Actions */}
             <HeaderUpdater
                 title="Global Settings"
                 description="Manage school-wide configuration and preferences"
-            />
+            >
+                <Button size="sm" className="gap-1.5 h-9 text-sm" onClick={handleSave} disabled={isLoading}>
+                    {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Save className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{isLoading ? "Saving..." : "Save Changes"}</span>
+                </Button>
+            </HeaderUpdater>
 
             {/* School Information */}
             <Card>
@@ -324,17 +333,7 @@ export default function SettingsClient({ initialSettings, academicYears, current
                 </CardContent>
             </Card>
 
-            {/* Save Button */}
-            <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={isLoading}>
-                    {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Save className="mr-2 h-4 w-4" />
-                    )}
-                    {isLoading ? "Saving..." : "Save Changes"}
-                </Button>
-            </div>
+
         </div>
     );
 }

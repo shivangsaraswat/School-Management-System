@@ -21,6 +21,9 @@ import {
     Target,
     Check,
     Clock,
+    Save,
+    X,
+    Pencil
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -169,7 +172,38 @@ export function StudentProfileClient({
                     label: "Back to Class List",
                     href: "/operations/students"
                 }}
-            />
+            >
+                <div className="flex gap-2">
+                    {isEditing ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9"
+                                onClick={() => setIsEditing(false)}
+                            >
+                                <X className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">Cancel</span>
+                            </Button>
+                            <Button size="sm" className="h-9" onClick={handleSave} disabled={isLoading}>
+                                {isLoading ? (
+                                    <span className="hidden sm:inline">Saving...</span>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        <span className="hidden sm:inline">Save Changes</span>
+                                    </>
+                                )}
+                            </Button>
+                        </>
+                    ) : (
+                        <Button size="sm" className="h-9" onClick={() => setIsEditing(true)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Edit Profile</span>
+                        </Button>
+                    )}
+                </div>
+            </HeaderUpdater>
             <div className="flex flex-col gap-4">
 
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -207,20 +241,7 @@ export function StudentProfileClient({
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
-                        {isEditing ? (
-                            <>
-                                <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                                <Button onClick={handleSave} disabled={isLoading}>
-                                    {isLoading ? "Saving..." : "Save Changes"}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button onClick={() => setIsEditing(true)}>
-                                Edit Profile
-                            </Button>
-                        )}
-                    </div>
+
                 </div>
             </div>
 

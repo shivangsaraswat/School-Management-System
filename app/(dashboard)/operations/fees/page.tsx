@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Receipt, Plus, IndianRupee, TrendingUp, AlertCircle, Settings, History, Target } from "lucide-react";
+import { Receipt, IndianRupee, TrendingUp, AlertCircle, History, Target } from "lucide-react";
 import { requireOperations } from "@/lib/dal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { getFeeTransactionsNew } from "@/lib/actions/fees";
 import { getFeeAccountStatistics, getStudentsWithPendingFees, getClassWisePendingSummary } from "@/lib/actions/fee-accounts";
 import { getCurrentAcademicYear } from "@/lib/actions/settings";
 import { format } from "date-fns";
-import { HeaderUpdater } from "@/components/dashboard/header-context";
+import { FeesHeader } from "./fees-header";
 
 // Helper to format currency
 function formatCurrency(amount: number): string {
@@ -36,26 +36,7 @@ export default async function FeesPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <HeaderUpdater
-                title="Fee Management"
-                description={`${currentYear} • Balance-based fee tracking`}
-            />
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-                <div className="flex gap-2">
-                    <Button variant="outline" asChild>
-                        <Link href="/operations/fees/structure">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Fee Structure
-                        </Link>
-                    </Button>
-                    <Button asChild>
-                        <Link href="/operations/fees/collect">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Collect Fee
-                        </Link>
-                    </Button>
-                </div>
-            </div>
+            <FeesHeader currentYear={currentYear} />
 
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-4">

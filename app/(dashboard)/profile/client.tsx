@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Save, Camera, Mail, Phone, Shield, Calendar, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { User, Lock, Save, Camera, Mail, Phone, Shield, Calendar, Eye, EyeOff, CheckCircle2, X, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,11 +155,43 @@ export default function ProfileClient({ user }: ProfileClientProps) {
 
     return (
         <div className="space-y-6 animate-fade-in max-w-3xl">
-            {/* Header */}
+            {/* Header with Actions */}
             <HeaderUpdater
                 title="My Profile"
                 description="Manage your account settings and preferences"
-            />
+            >
+                <div className="flex gap-2">
+                    {isEditing ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9"
+                                onClick={handleCancelEdit}
+                                disabled={isSaving}
+                            >
+                                <X className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">Cancel</span>
+                            </Button>
+                            <Button size="sm" className="h-9" onClick={handleSaveProfile} disabled={isSaving}>
+                                {isSaving ? (
+                                    <>Saving...</>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        <span className="hidden sm:inline">Save Changes</span>
+                                    </>
+                                )}
+                            </Button>
+                        </>
+                    ) : (
+                        <Button size="sm" className="h-9" onClick={() => setIsEditing(true)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Edit Profile</span>
+                        </Button>
+                    )}
+                </div>
+            </HeaderUpdater>
 
             {/* Profile Card */}
             <Card>
@@ -254,34 +286,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2">
-                        {isEditing ? (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleCancelEdit}
-                                    disabled={isSaving}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleSaveProfile}
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? (
-                                        <>Saving...</>
-                                    ) : (
-                                        <>
-                                            <Save className="mr-2 h-4 w-4" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
-                        )}
-                    </div>
+
                 </CardContent>
             </Card>
 

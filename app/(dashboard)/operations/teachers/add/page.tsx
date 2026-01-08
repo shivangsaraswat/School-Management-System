@@ -22,6 +22,8 @@ import {
     GraduationCap,
     MapPin,
     Phone,
+    Save,
+    X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createTeacher } from "@/lib/actions/teachers";
@@ -95,12 +97,29 @@ export default function AddTeacherPage() {
 
     return (
         <div className="space-y-6 animate-fade-in max-w-4xl mx-auto pb-10">
-            {/* Header */}
+            {/* Header with Actions */}
             <HeaderUpdater
                 title="Add New Teacher"
                 description="Create a new teacher record"
                 backLink={{ label: "Teachers", href: "/operations/teachers" }}
-            />
+            >
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="h-9" asChild>
+                        <Link href="/operations/teachers">
+                            <X className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Cancel</span>
+                        </Link>
+                    </Button>
+                    <Button size="sm" className="h-9" onClick={handleSubmit} disabled={isLoading}>
+                        {isLoading ? "Adding..." : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">Add Teacher</span>
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </HeaderUpdater>
 
             {/* Personal Information */}
             <Card>
@@ -314,15 +333,7 @@ export default function AddTeacherPage() {
                 </CardContent>
             </Card>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-4">
-                <Button variant="outline" asChild>
-                    <Link href="/operations/teachers">Cancel</Link>
-                </Button>
-                <Button onClick={handleSubmit} disabled={isLoading}>
-                    {isLoading ? "Adding..." : "Add Teacher"}
-                </Button>
-            </div>
+
         </div>
     );
 }

@@ -10,7 +10,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useHeader } from "./header-context";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
 interface HeaderProps {
@@ -23,14 +22,12 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
-    const pathname = usePathname();
     const { theme, setTheme } = useTheme();
-    const { title, description, backLink } = useHeader();
+    const { title, description, backLink, actions } = useHeader();
 
     // Only show title/description if explicitly set via HeaderUpdater
-    // Dashboard doesn't set a title, so it will show nothing in the header title area
     const displayTitle = title || "";
-    const showHeaderContent = !!(displayTitle || backLink);
+    const isDashboard = !displayTitle && !actions;
 
     return (
         <header className="flex h-16 shrink-0 items-center justify-between px-6 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-background/50 backdrop-blur-sm border-b sticky top-0 z-50">
@@ -59,20 +56,28 @@ export function Header({ user }: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-3">
-                <div className="hidden md:flex md:w-72 lg:w-80">
-                    <Search />
-                </div>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                >
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-                <UserNav user={user} />
+                {isDashboard ? (
+                    <>
+                        <div className="hidden md:flex md:w-72 lg:w-80">
+                            <Search />
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                        >
+                            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                            <span className="sr-only">Toggle theme</span>
+                        </Button>
+                        <UserNav user={user} />
+                    </>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        {actions}
+                    </div>
+                )}
             </div>
         </header>
     );
