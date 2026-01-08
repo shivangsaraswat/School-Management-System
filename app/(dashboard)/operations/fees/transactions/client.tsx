@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { getFeeTransactionsNew, deleteFeeTransaction } from "@/lib/actions/fees";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface Transaction {
     transaction: {
@@ -157,15 +158,10 @@ export function TransactionsClient({
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                    <Receipt className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                    Fee Transactions
-                </h1>
-                <p className="text-muted-foreground">
-                    View all fee payments and receipts
-                </p>
-            </div>
+            <HeaderUpdater
+                title="Fee Transactions"
+                description="View all fee payments and receipts"
+            />
 
             {/* Filters */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

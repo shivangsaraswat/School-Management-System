@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { getExams, getExamStatistics } from "@/lib/actions/exams";
 import { format } from "date-fns";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 export default async function ExamsPage() {
     await requireAcademics();
@@ -19,16 +20,11 @@ export default async function ExamsPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <FileText className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Examinations
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Manage exam schedules and enter marks
-                    </p>
-                </div>
+            <HeaderUpdater
+                title="Examinations"
+                description="Manage exam schedules and enter marks"
+            />
+            <div className="flex justify-end">
                 <Button>
                     <Plus className="mr-2 h-4 w-4" />
                     Schedule Exam

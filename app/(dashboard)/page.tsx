@@ -44,11 +44,9 @@ export default async function DashboardPage() {
     }
 
     // Check if user can access academics (for attendance stats)
-    // Teachers are already redirected, so anyone reaching here who is NOT office_staff can access
     const canAccessAttendance = user.role !== ROLES.OFFICE_STAFF;
 
     // Fetch real data from database
-    // Note: Attendance stats require academics access, so we conditionally fetch
     const [dashboardStats, teachersCount, feeStats, attendanceStats, recentStudents] = await Promise.all([
         getDashboardStatistics(),
         getTeachersCount(),
@@ -78,13 +76,13 @@ export default async function DashboardPage() {
     };
 
     return (
-        <div className="space-y-4 md:space-y-6 animate-fade-in">
-            {/* Welcome Header */}
+        <div className="space-y-4 md:space-y-6 animate-fade-in pt-2 md:pt-4">
+            {/* Welcome Header - In Main Content Area */}
             <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                     Welcome back, {user.name.split(" ")[0]}!
                 </h1>
-                <p className="text-muted-foreground text-sm md:text-base">
+                <p className="text-muted-foreground mt-1">
                     {getRoleMessage()}
                 </p>
             </div>

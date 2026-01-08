@@ -49,6 +49,7 @@ import {
 import { toast } from "sonner";
 import { deleteAuditLog, deleteMultipleAuditLogs } from "@/lib/actions/audit-logs";
 import { format } from "date-fns";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface AuditLog {
     id: string;
@@ -192,16 +193,11 @@ export default function AuditLogsClient({ initialLogs, stats }: AuditLogsClientP
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Audit Logs
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Track all system activities and changes
-                    </p>
-                </div>
+            <HeaderUpdater
+                title="Audit Logs"
+                description="Track all system activities and changes"
+            />
+            <div className="flex items-center justify-end">
                 <Button variant="outline" onClick={() => toast.info("Export feature coming soon")}>
                     <Download className="mr-2 h-4 w-4" />
                     Export

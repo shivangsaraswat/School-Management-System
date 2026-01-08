@@ -50,6 +50,7 @@ import { getAcademicYears, getCurrentAcademicYear } from "@/lib/actions/settings
 import { getSchoolClasses } from "@/lib/actions/settings";
 import { toast } from "sonner";
 import type { FeeStructure } from "@/db/schema";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface ClassConfig {
     name: string;
@@ -246,125 +247,118 @@ export function FeeStructureClient({
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Fee Structure
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Define fee amounts per class for each academic year
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    {/* Copy from Previous Year */}
-                    <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" disabled={structures.length > 0}>
-                                <Copy className="mr-2 h-4 w-4" />
-                                Copy from Year
+            <HeaderUpdater
+                title="Fee Structure"
+                description="Define fee amounts per class for each academic year"
+            />
+            <div className="flex justify-end gap-2">
+                {/* Copy from Previous Year */}
+                <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" disabled={structures.length > 0}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy from Year
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Copy Fee Structures</DialogTitle>
+                            <DialogDescription>
+                                Copy all fee structures from a previous year to {selectedYear}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <Label>Copy from</Label>
+                            <Select value={copyFromYear} onValueChange={setCopyFromYear}>
+                                <SelectTrigger className="mt-2">
+                                    <SelectValue placeholder="Select year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {academicYears
+                                        .filter((y) => y !== selectedYear)
+                                        .map((year) => (
+                                            <SelectItem key={year} value={year}>
+                                                {year}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setCopyDialogOpen(false)}
+                            >
+                                Cancel
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Copy Fee Structures</DialogTitle>
-                                <DialogDescription>
-                                    Copy all fee structures from a previous year to {selectedYear}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                                <Label>Copy from</Label>
-                                <Select value={copyFromYear} onValueChange={setCopyFromYear}>
+                            <Button onClick={handleCopy} disabled={isLoading}>
+                                {isLoading ? "Copying..." : "Copy Structures"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Add Structure */}
+                <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button disabled={availableClasses.length === 0}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Structure
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Add Fee Structure</DialogTitle>
+                            <DialogDescription>
+                                Define the total fee for a class in {selectedYear}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div>
+                                <Label>Class</Label>
+                                <Select
+                                    value={selectedClass}
+                                    onValueChange={setSelectedClass}
+                                >
                                     <SelectTrigger className="mt-2">
-                                        <SelectValue placeholder="Select year" />
+                                        <SelectValue placeholder="Select class" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {academicYears
-                                            .filter((y) => y !== selectedYear)
-                                            .map((year) => (
-                                                <SelectItem key={year} value={year}>
-                                                    {year}
-                                                </SelectItem>
-                                            ))}
+                                        {availableClasses.map((cls) => (
+                                            <SelectItem key={cls.name} value={cls.name}>
+                                                {cls.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <DialogFooter>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setCopyDialogOpen(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleCopy} disabled={isLoading}>
-                                    {isLoading ? "Copying..." : "Copy Structures"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    {/* Add Structure */}
-                    <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button disabled={availableClasses.length === 0}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Structure
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add Fee Structure</DialogTitle>
-                                <DialogDescription>
-                                    Define the total fee for a class in {selectedYear}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div>
-                                    <Label>Class</Label>
-                                    <Select
-                                        value={selectedClass}
-                                        onValueChange={setSelectedClass}
-                                    >
-                                        <SelectTrigger className="mt-2">
-                                            <SelectValue placeholder="Select class" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availableClasses.map((cls) => (
-                                                <SelectItem key={cls.name} value={cls.name}>
-                                                    {cls.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Total Fee (₹)</Label>
-                                    <div className="relative mt-2">
-                                        <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                        <Input
-                                            type="number"
-                                            placeholder="18000"
-                                            className="pl-9"
-                                            value={totalFee}
-                                            onChange={(e) => setTotalFee(e.target.value)}
-                                        />
-                                    </div>
+                            <div>
+                                <Label>Total Fee (₹)</Label>
+                                <div className="relative mt-2">
+                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        type="number"
+                                        placeholder="18000"
+                                        className="pl-9"
+                                        value={totalFee}
+                                        onChange={(e) => setTotalFee(e.target.value)}
+                                    />
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setAddDialogOpen(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleCreate} disabled={isLoading}>
-                                    {isLoading ? "Creating..." : "Create"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setAddDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={handleCreate} disabled={isLoading}>
+                                {isLoading ? "Creating..." : "Create"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Year Filter */}
@@ -522,6 +516,6 @@ export function FeeStructureClient({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }

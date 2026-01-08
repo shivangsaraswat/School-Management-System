@@ -79,7 +79,11 @@ export const students = pgTable("students", {
     dateOfBirth: date("date_of_birth").notNull(),
     gender: genderEnum("gender").notNull(),
     bloodGroup: text("blood_group"),
+    religion: text("religion"),
+    caste: text("caste"),
     photo: text("photo"),
+    aadhaarNumber: text("aadhaar_number"),
+    aadhaarCard: text("aadhaar_card"), // URL
     // Contact
     email: text("email"),
     phone: text("phone"),
@@ -93,12 +97,30 @@ export const students = pgTable("students", {
     rollNumber: integer("roll_number"),
     academicYear: text("academic_year").notNull(),
     admissionDate: date("admission_date").notNull(),
+    // Father
+    fatherName: text("father_name"),
+    fatherPhone: text("father_phone"),
+    fatherOccupation: text("father_occupation"),
+    fatherPhoto: text("father_photo"),
+    fatherAadhaarNumber: text("father_aadhaar_number"),
+    fatherAadhaarCard: text("father_aadhaar_card"), // URL
+    // Mother
+    motherName: text("mother_name"),
+    motherPhone: text("mother_phone"),
+    motherOccupation: text("mother_occupation"),
+    motherPhoto: text("mother_photo"),
+    motherAadhaarNumber: text("mother_aadhaar_number"),
+    motherAadhaarCard: text("mother_aadhaar_card"), // URL
     // Guardian
     guardianName: text("guardian_name").notNull(),
     guardianRelation: text("guardian_relation").notNull(),
     guardianPhone: text("guardian_phone").notNull(),
     guardianEmail: text("guardian_email"),
     guardianOccupation: text("guardian_occupation"),
+    guardianPhoto: text("guardian_photo"),
+    guardianAadhaarNumber: text("guardian_aadhaar_number"),
+    guardianAadhaarCard: text("guardian_aadhaar_card"), // URL
+    guardianAddress: text("guardian_address"),
     // Status
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { createTeacher } from "@/lib/actions/teachers";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 export default function AddTeacherPage() {
     const router = useRouter();
@@ -95,22 +96,11 @@ export default function AddTeacherPage() {
     return (
         <div className="space-y-6 animate-fade-in max-w-4xl mx-auto pb-10">
             {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/operations/teachers">
-                        <ChevronLeft className="h-5 w-5" />
-                    </Link>
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <UserPlus className="h-6 w-6" />
-                        Add New Teacher
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Create a new teacher record
-                    </p>
-                </div>
-            </div>
+            <HeaderUpdater
+                title="Add New Teacher"
+                description="Create a new teacher record"
+                backLink={{ label: "Teachers", href: "/operations/teachers" }}
+            />
 
             {/* Personal Information */}
             <Card>

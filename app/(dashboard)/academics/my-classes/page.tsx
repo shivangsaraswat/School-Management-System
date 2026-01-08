@@ -6,6 +6,7 @@ import { getDashboardStatistics } from "@/lib/actions/students";
 import { getTodayAttendanceStats } from "@/lib/actions/attendance";
 import { getSchoolClasses } from "@/lib/actions/settings";
 import Link from "next/link";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface SchoolClass {
     name: string;
@@ -47,15 +48,10 @@ export default async function MyClassesPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                    My Classes
-                </h1>
-                <p className="text-muted-foreground">
-                    Overview of your assigned classes and students
-                </p>
-            </div>
+            <HeaderUpdater
+                title="My Classes"
+                description="Overview of your assigned classes and students"
+            />
 
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-4">

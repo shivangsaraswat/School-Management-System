@@ -1,6 +1,7 @@
 import { requireOperations } from "@/lib/dal";
 import { getTeachers, getTeachersCount } from "@/lib/actions/teachers";
 import { TeachersClient } from "./teachers-client";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 export default async function TeachersPage() {
     await requireOperations();
@@ -16,16 +17,10 @@ export default async function TeachersPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        👨‍🏫 Teachers
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Manage teacher records, documents, and class assignments
-                    </p>
-                </div>
-            </div>
+            <HeaderUpdater
+                title="Teachers"
+                description="Manage teacher records, documents, and class assignments"
+            />
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

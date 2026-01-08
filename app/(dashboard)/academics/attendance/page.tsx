@@ -12,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 const classes = [
     "Nursery", "LKG", "UKG",
@@ -33,17 +34,12 @@ export default async function AttendancePage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <ClipboardCheck className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Attendance
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Mark and track daily attendance
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <HeaderUpdater
+                title="Attendance"
+                description="Mark and track daily attendance"
+            />
+            <div className="flex justify-end">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-md">
                     <Calendar className="h-4 w-4" />
                     {new Date().toLocaleDateString("en-IN", {
                         weekday: "long",

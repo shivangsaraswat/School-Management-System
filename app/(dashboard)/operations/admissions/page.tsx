@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { getInquiries, getInquiryStatistics } from "@/lib/actions/inquiries";
 import { format } from "date-fns";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 export default async function AdmissionsPage() {
     await requireOperations();
@@ -28,16 +29,11 @@ export default async function AdmissionsPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <UserPlus className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Admissions
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Manage admission inquiries and applications
-                    </p>
-                </div>
+            <HeaderUpdater
+                title="Admissions"
+                description="Manage admission inquiries and applications"
+            />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
                 <Button asChild>
                     <Link href="/operations/admissions/new">
                         <Plus className="mr-2 h-4 w-4" />

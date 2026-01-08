@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { setSetting, addAcademicYear } from "@/lib/actions/settings";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface SettingsClientProps {
     initialSettings: Record<string, string>;
@@ -117,15 +118,10 @@ export default function SettingsClient({ initialSettings, academicYears, current
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                    <Settings className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                    Global Settings
-                </h1>
-                <p className="text-muted-foreground">
-                    Manage school-wide configuration and preferences
-                </p>
-            </div>
+            <HeaderUpdater
+                title="Global Settings"
+                description="Manage school-wide configuration and preferences"
+            />
 
             {/* School Information */}
             <Card>

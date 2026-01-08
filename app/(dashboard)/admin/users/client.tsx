@@ -69,6 +69,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ROLES } from "@/lib/constants";
 import { createUser, deleteUser, updateUser, permanentlyDeleteUser, reactivateUser, regeneratePassword } from "@/lib/actions/users";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 type RoleType = "super_admin" | "admin" | "office_staff" | "teacher" | "student";
 
@@ -413,14 +414,11 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
     return (
         <div className="space-y-6 pt-5 pb-10">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">User Accounts</h1>
-                    <p className="text-muted-foreground">
-                        Manage system access and roles for staff members.
-                    </p>
-                </div>
-
+            <HeaderUpdater
+                title="User Accounts"
+                description="Manage system access and roles for staff members."
+            />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
                 <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                     <SheetTrigger asChild>
                         <Button className="gap-2">

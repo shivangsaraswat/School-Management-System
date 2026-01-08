@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { updateOwnProfile, changePassword } from "@/lib/actions/users";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface UserProfile {
     id: string;
@@ -155,15 +156,10 @@ export default function ProfileClient({ user }: ProfileClientProps) {
     return (
         <div className="space-y-6 animate-fade-in max-w-3xl">
             {/* Header */}
-            <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                    <User className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                    My Profile
-                </h1>
-                <p className="text-muted-foreground">
-                    Manage your account settings and preferences
-                </p>
-            </div>
+            <HeaderUpdater
+                title="My Profile"
+                description="Manage your account settings and preferences"
+            />
 
             {/* Profile Card */}
             <Card>

@@ -7,6 +7,7 @@ import { getFeeTransactionsNew } from "@/lib/actions/fees";
 import { getFeeAccountStatistics, getStudentsWithPendingFees, getClassWisePendingSummary } from "@/lib/actions/fee-accounts";
 import { getCurrentAcademicYear } from "@/lib/actions/settings";
 import { format } from "date-fns";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 // Helper to format currency
 function formatCurrency(amount: number): string {
@@ -35,16 +36,11 @@ export default async function FeesPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <Receipt className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Fee Management
-                    </h1>
-                    <p className="text-muted-foreground">
-                        {currentYear} • Balance-based fee tracking
-                    </p>
-                </div>
+            <HeaderUpdater
+                title="Fee Management"
+                description={`${currentYear} • Balance-based fee tracking`}
+            />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
                 <div className="flex gap-2">
                     <Button variant="outline" asChild>
                         <Link href="/operations/fees/structure">

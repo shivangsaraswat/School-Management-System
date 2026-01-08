@@ -10,6 +10,7 @@ import { requireOperations } from "@/lib/dal";
 import { getClassStatistics, getDashboardStatistics } from "@/lib/actions/students";
 import { getSchoolClasses } from "@/lib/actions/settings";
 import { StudentsClient } from "./students-client";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 export default async function StudentsPage({
     searchParams,
@@ -118,16 +119,11 @@ export default async function StudentsPage({
     return (
         <div className="space-y-4 md:space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <Users className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Students
-                    </h1>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Manage student records by class
-                    </p>
-                </div>
+            <HeaderUpdater
+                title="Students"
+                description="Manage student records by class"
+            />
+            <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3 md:gap-4">
                 <div className="flex flex-wrap gap-2 items-center">
                     <Button asChild size="sm" className="gap-1.5 h-9 text-sm">
                         <Link href="/operations/students/add">

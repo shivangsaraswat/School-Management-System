@@ -26,6 +26,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { Student } from "@/db/schema";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface StudentWithFeeStatus extends Student {
     feeStatus: string;
@@ -73,33 +74,20 @@ export function ClassStudentsClient({
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Header with Back Button */}
-            <div className="flex flex-col gap-4">
-                <Button
-                    variant="ghost"
-                    className="w-fit p-0 hover:bg-transparent text-muted-foreground hover:text-foreground no-underline"
-                    onClick={() => router.back()}
-                >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Classes
-                </Button>
+            {/* Header */}
+            <HeaderUpdater
+                title={className}
+                description={`${students.length} students enrolled • ${academicYear}`}
+                backLink={{ label: "Classes", href: "/admin/academics/classes" }}
+            />
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            {className}
-                        </h1>
-                        <p className="text-muted-foreground">
-                            {students.length} students enrolled • {academicYear}
-                        </p>
-                    </div>
-                    <Button className="gap-2" asChild>
-                        <Link href={`/operations/students/add?class=${encodeURIComponent(className)}`}>
-                            <UserPlus className="h-4 w-4" />
-                            Add Student
-                        </Link>
-                    </Button>
-                </div>
+            <div className="flex justify-end gap-2">
+                <Button className="gap-2" asChild>
+                    <Link href={`/operations/students/add?class=${encodeURIComponent(className)}`}>
+                        <UserPlus className="h-4 w-4" />
+                        Add Student
+                    </Link>
+                </Button>
             </div>
 
             {/* Quick Stats */}

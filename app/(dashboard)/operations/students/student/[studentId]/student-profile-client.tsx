@@ -38,6 +38,7 @@ import { updateStudent } from "@/lib/actions/students";
 import type { Student, StudentFeeAccount, FeeTransaction, FeeAdjustment } from "@/db/schema";
 import { format } from "date-fns";
 import { formatClassSection } from "@/lib/utils";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface StudentProfileClientProps {
     student: Student;
@@ -161,15 +162,15 @@ export function StudentProfileClient({
     return (
         <div className="space-y-6 animate-fade-in pb-10">
             {/* Header / Nav */}
+            <HeaderUpdater
+                title="Student Profile"
+                description={`${student.firstName} ${student.lastName} (${student.admissionNumber})`}
+                backLink={{
+                    label: "Back to Class List",
+                    href: "/operations/students"
+                }}
+            />
             <div className="flex flex-col gap-4">
-                <Button
-                    variant="ghost"
-                    className="w-fit p-0 hover:bg-transparent text-muted-foreground hover:text-foreground no-underline"
-                    onClick={() => router.back()}
-                >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Class List
-                </Button>
 
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                     <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -190,7 +191,7 @@ export function StudentProfileClient({
                             <h1 className="text-3xl font-bold tracking-tight">{student.firstName} {student.lastName}</h1>
                             <div className="flex items-center gap-2 mt-2 text-muted-foreground flex-wrap">
                                 <Badge variant="outline" className="text-sm font-normal py-1 px-3 bg-background">
-                                    {formatClassSection(student.className, student.section, { allSections })}
+                                    {formatClassSection(student.className, student.section || undefined, { allSections })}
                                 </Badge>
                                 <Separator orientation="vertical" className="h-4" />
                                 <span className="flex items-center gap-1 text-sm">

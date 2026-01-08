@@ -49,6 +49,7 @@ import {
     removeClassFromTeacher,
 } from "@/lib/actions/teachers";
 import type { Teacher, TeacherClassAssignment, TeacherDocument } from "@/db/schema";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface LinkedUser {
     id: string;
@@ -224,15 +225,12 @@ export function TeacherProfileClient({
 
     return (
         <div className="space-y-6 animate-fade-in pb-10">
-            {/* Back Button */}
-            <Button
-                variant="ghost"
-                className="w-fit p-0 hover:bg-transparent text-muted-foreground hover:text-foreground no-underline"
-                onClick={() => router.back()}
-            >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back to Teachers
-            </Button>
+            {/* Header */}
+            <HeaderUpdater
+                title="Teacher Profile"
+                description="Manage teacher details and class assignments"
+                backLink={{ label: "Teachers", href: "/operations/teachers" }}
+            />
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface RevenueDashboardClientProps {
     stats: {
@@ -83,16 +84,11 @@ export default function RevenueDashboardClient({ stats, monthlyData, classData }
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        Revenue Dashboard
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Financial overview and fee collection analytics
-                    </p>
-                </div>
+            <HeaderUpdater
+                title="Revenue Dashboard"
+                description="Financial overview and fee collection analytics"
+            />
+            <div className="flex items-center justify-end">
                 <Button variant="outline">
                     <Download className="mr-2 h-4 w-4" />
                     Export Report

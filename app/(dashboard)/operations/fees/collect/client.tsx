@@ -34,6 +34,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { searchStudentsForFeeCollection, collectFee } from "@/lib/actions/fees";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
+import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface StudentWithAccount {
     student: {
@@ -42,7 +43,7 @@ interface StudentWithAccount {
         firstName: string;
         lastName: string;
         className: string;
-        section: string;
+        section: string | null;
     };
     feeAccount: {
         id: string;
@@ -191,15 +192,10 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-                    <Receipt className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                    Collect Fee
-                </h1>
-                <p className="text-muted-foreground">
-                    Search for a student and collect their fee payment
-                </p>
-            </div>
+            <HeaderUpdater
+                title="Collect Fee"
+                description="Search for a student and collect their fee payment"
+            />
 
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Search & Select Student */}
