@@ -52,24 +52,17 @@ import { toast } from "sonner";
 import { getFeeTransactionsNew, deleteFeeTransaction } from "@/lib/actions/fees";
 import { HeaderUpdater } from "@/components/dashboard/header-context";
 
+import { FeeTransaction } from "@/db/schema";
+
 interface Transaction {
-    transaction: {
-        id: string;
-        receiptNumber: string;
-        amountPaid: string;
-        paymentMode: string;
-        paymentFor: string | null;
-        remarks: string | null;
-        transactionDate: Date;
-        createdAt: Date;
-    };
+    transaction: FeeTransaction;
     student: {
         id: string;
         admissionNumber: string;
         firstName: string;
         lastName: string;
         className: string;
-        section: string;
+        section: string | null;
     } | null;
 }
 
@@ -254,7 +247,11 @@ export function TransactionsClient({
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {t.student ? `${t.student.className} - ${t.student.section}` : "-"}
+                                            {t.student ? (
+                                                t.student.section
+                                                    ? `${t.student.className} - ${t.student.section}`
+                                                    : t.student.className
+                                            ) : "-"}
                                         </TableCell>
                                         <TableCell className="font-semibold text-green-600">
                                             {formatCurrency(t.transaction.amountPaid)}
