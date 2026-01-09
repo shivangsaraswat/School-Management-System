@@ -247,14 +247,28 @@ export async function generateReceiptNumber(
     // Format: PTBS/2025-26/FEE/00001
     const yearPart = academicYear.replace("-", "-");
 
-    // Get count of existing transactions for this year
-    const countResult = await db
-        .select({ count: sql<number>`COUNT(*)` })
+    // Get the latest transaction receipt number for this year to determine next sequence
+    // We use max receipt number instead of count to avoid duplicate key errors if transactions are deleted
+    const lastTransaction = await db
+        .select({ receiptNumber: feeTransactions.receiptNumber })
         .from(feeTransactions)
-        .where(eq(feeTransactions.academicYear, academicYear));
+        .where(eq(feeTransactions.academicYear, academicYear))
+        .orderBy(desc(feeTransactions.receiptNumber))
+        .limit(1);
 
-    const count = (countResult[0]?.count || 0) + 1;
-    const paddedCount = count.toString().padStart(5, "0");
+    let nextSequence = 1;
+
+    if (lastTransaction.length > 0 && lastTransaction[0].receiptNumber) {
+        const parts = lastTransaction[0].receiptNumber.split("/");
+        const lastSequenceStr = parts[parts.length - 1];
+        const lastSequence = parseInt(lastSequenceStr, 10);
+
+        if (!isNaN(lastSequence)) {
+            nextSequence = lastSequence + 1;
+        }
+    }
+
+    const paddedCount = nextSequence.toString().padStart(5, "0");
 
     return `${schoolCode}/${yearPart}/FEE/${paddedCount}`;
 }

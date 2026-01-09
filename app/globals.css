@@ -144,3 +144,40 @@
     }
   }
 }
+
+/* Print Styles for Fee Receipts */
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the printable receipt area */
+  .print\:block,
+  .print\:block * {
+    visibility: visible !important;
+  }
+
+  .print\:block {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+  }
+
+  /* Hide elements that should not print */
+  .hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Ensure proper page setup */
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+}

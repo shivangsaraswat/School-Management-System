@@ -15,7 +15,11 @@ import {
     Users,
     BarChart3,
     GraduationCap,
-    Award
+    Award,
+    ChevronRight,
+    Eye,
+    CreditCard,
+    History,
 } from "lucide-react"
 
 import {
@@ -30,7 +34,15 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarGroupContent,
+    SidebarMenuSub,
+    SidebarMenuSubItem,
+    SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 import {
     canAccessSuperAdmin,
@@ -39,6 +51,31 @@ import {
     canAccessStudentPortal
 } from "@/lib/permissions";
 import { ROLES, type Role } from "@/lib/constants";
+import { LucideIcon } from "lucide-react";
+
+// Type for regular menu items
+interface MenuItem {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+}
+
+// Type for menu items with submenus
+interface MenuItemWithSub {
+    title: string;
+    icon: LucideIcon;
+    subItems: {
+        title: string;
+        url: string;
+        icon?: LucideIcon;
+    }[];
+}
+
+type NavItem = MenuItem | MenuItemWithSub;
+
+function hasSubItems(item: NavItem): item is MenuItemWithSub {
+    return 'subItems' in item;
+}
 
 export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole: Role }) {
     const pathname = usePathname();
@@ -51,7 +88,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
             { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
             { title: "Revenue", url: "/admin/revenue", icon: BarChart3 },
             { title: "Settings", url: "/admin/settings", icon: Settings },
-        ],
+        ] as NavItem[],
     };
 
     const operationsNav = {
@@ -61,8 +98,16 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
             { title: "Students", url: "/operations/students", icon: Users },
             { title: "Teachers", url: "/operations/teachers", icon: GraduationCap },
             { title: "Admissions", url: "/operations/admissions", icon: UserPlus },
-            { title: "Fees", url: "/operations/fees", icon: Receipt },
-        ],
+            {
+                title: "Fees",
+                icon: Receipt,
+                subItems: [
+                    { title: "Overview", url: "/operations/fees", icon: Eye },
+                    { title: "Collect Fees", url: "/operations/fees/collect", icon: CreditCard },
+                    { title: "Transactions", url: "/operations/fees/transactions", icon: History },
+                ],
+            },
+        ] as NavItem[],
     };
 
     const academicsNav = {
@@ -72,7 +117,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
             { title: "Attendance", url: "/academics/attendance", icon: ClipboardCheck },
             { title: "Exams", url: "/academics/exams", icon: FileText },
             { title: "My Classes", url: "/academics/my-classes", icon: BookOpen },
-        ],
+        ] as NavItem[],
     };
 
     const studentNav = {
@@ -80,10 +125,10 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
         checkAccess: canAccessStudentPortal,
         items: [
             { title: "My Results", url: "/student/results", icon: Award },
-        ],
+        ] as NavItem[],
     };
 
-    const groups = [];
+    const groups: { label: string; items: NavItem[] }[] = [];
 
     if (userRole !== ROLES.STUDENT) {
         groups.push({
@@ -136,6 +181,57 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 {group.items.map((item) => {
+                                    if (hasSubItems(item)) {
+                                        // Check if any subitem is active
+                                        const isSubActive = item.subItems.some(
+                                            (sub) => pathname === sub.url || pathname.startsWith(sub.url + "/")
+                                        );
+
+                                        return (
+                                            <Collapsible
+                                                key={item.title}
+                                                asChild
+                                                defaultOpen={isSubActive}
+                                                className="group/collapsible"
+                                            >
+                                                <SidebarMenuItem>
+                                                    <CollapsibleTrigger asChild>
+                                                        <SidebarMenuButton
+                                                            tooltip={item.title}
+                                                            isActive={isSubActive}
+                                                            className="text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                                        >
+                                                            <item.icon className="size-4" />
+                                                            <span className="text-sm font-medium">{item.title}</span>
+                                                            <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                        </SidebarMenuButton>
+                                                    </CollapsibleTrigger>
+                                                    <CollapsibleContent>
+                                                        <SidebarMenuSub>
+                                                            {item.subItems.map((subItem) => {
+                                                                const isActive = pathname === subItem.url || pathname.startsWith(subItem.url + "/");
+                                                                return (
+                                                                    <SidebarMenuSubItem key={subItem.title}>
+                                                                        <SidebarMenuSubButton
+                                                                            asChild
+                                                                            isActive={isActive}
+                                                                        >
+                                                                            <Link href={subItem.url}>
+                                                                                {subItem.icon && <subItem.icon className="size-4" />}
+                                                                                <span>{subItem.title}</span>
+                                                                            </Link>
+                                                                        </SidebarMenuSubButton>
+                                                                    </SidebarMenuSubItem>
+                                                                );
+                                                            })}
+                                                        </SidebarMenuSub>
+                                                    </CollapsibleContent>
+                                                </SidebarMenuItem>
+                                            </Collapsible>
+                                        );
+                                    }
+
+                                    // Regular menu item
                                     const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
                                     return (
                                         <SidebarMenuItem key={item.title}>
