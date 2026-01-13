@@ -1,12 +1,25 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Inter, Manrope, JetBrains_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const outfit = Outfit({ subsets: ["latin"] });
+const inter = Inter({
+    subsets: ["latin"],
+    variable: "--font-inter",
+});
+
+const manrope = Manrope({
+    subsets: ["latin"],
+    variable: "--font-manrope",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+    subsets: ["latin"],
+    variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
     title: {
@@ -23,7 +36,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={outfit.className}>
+            <body className={`${inter.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans`}>
                 <SessionProvider>
                     <ThemeProvider
                         attribute="class"
@@ -41,3 +54,4 @@ export default function RootLayout({
         </html>
     );
 }
+

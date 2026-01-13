@@ -43,7 +43,7 @@ export function FeeReceipt({
         <div className="receipt-container">
             <style jsx>{`
                 .receipt-container {
-                    font-family: Arial, Helvetica, sans-serif;
+                    font-family: var(--font-inter), Arial, Helvetica, sans-serif;
                     font-size: 12px;
                     color: #000;
                     max-width: 800px;
@@ -61,6 +61,7 @@ export function FeeReceipt({
                 }
 
                 .school-name {
+                    font-family: var(--font-manrope), sans-serif;
                     font-size: 18px;
                     font-weight: bold;
                     margin-bottom: 4px;
@@ -71,6 +72,7 @@ export function FeeReceipt({
                 }
 
                 .receipt-title {
+                    font-family: var(--font-manrope), sans-serif;
                     text-align: center;
                     font-size: 14px;
                     font-weight: bold;
@@ -111,12 +113,15 @@ export function FeeReceipt({
                 }
 
                 table th {
+                    font-family: var(--font-manrope), sans-serif;
                     background-color: #f2f2f2;
                     font-weight: bold;
                 }
 
                 .amount-cell {
                     text-align: right;
+                    font-family: var(--font-manrope), sans-serif;
+                    font-weight: bold;
                 }
 
                 .summary {
@@ -138,6 +143,7 @@ export function FeeReceipt({
                     text-align: right;
                     width: 20%;
                     font-weight: bold;
+                    font-family: var(--font-manrope), sans-serif;
                 }
 
                 .footer {

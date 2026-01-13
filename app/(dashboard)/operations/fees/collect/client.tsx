@@ -248,61 +248,58 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
                     description="Search for a student to collect their fee payment"
                 />
 
-                {/* Centered Command Palette */}
-                <div className="flex-1 flex items-center justify-center">
+                {/* Top-Upper Command Palette */}
+                <div className="flex-1 flex justify-center pt-[15vh]">
                     <div className="w-full max-w-2xl px-4">
-                        {/* Search Icon & Title */}
+                        {/* Title Only - No Icon */}
                         <div className="text-center mb-8">
-                            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                                <CreditCard className="w-8 h-8 text-primary" />
-                            </div>
-                            <h2 className="text-2xl font-semibold text-foreground mb-2">
+                            <h2 className="text-2xl font-semibold text-foreground mb-1 tracking-tight">
                                 Search Student
                             </h2>
-                            <p className="text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                                 Enter student name, admission number, or class
                             </p>
                         </div>
 
                         {/* Large Search Input */}
                         <div className="relative">
-                            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 ref={searchInputRef}
                                 placeholder="Start typing to search..."
-                                className="h-14 pl-12 pr-4 text-lg rounded-xl border-2 focus:border-primary shadow-sm"
+                                className="h-12 pl-10 pr-4 text-base rounded-md border shadow-sm focus-visible:ring-1 focus-visible:ring-ring"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 autoFocus
                             />
                             {isSearching && (
-                                <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground animate-spin" />
+                                <Loader2 className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground animate-spin" />
                             )}
                         </div>
 
                         {/* Keyboard Hints */}
-                        <div className="flex justify-center gap-4 mt-3 text-xs text-muted-foreground">
+                        <div className="flex justify-center gap-4 mt-3 text-[10px] uppercase tracking-wider text-muted-foreground">
                             <span className="flex items-center gap-1">
-                                <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">↑</kbd>
-                                <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">↓</kbd>
-                                to navigate
+                                <kbd className="px-1 py-0.5 rounded border bg-background font-mono">↑</kbd>
+                                <kbd className="px-1 py-0.5 rounded border bg-background font-mono">↓</kbd>
+                                NAVIGATE
                             </span>
                             <span className="flex items-center gap-1">
-                                <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Enter</kbd>
-                                to select
+                                <kbd className="px-1 py-0.5 rounded border bg-background font-mono">↵</kbd>
+                                SELECT
                             </span>
                             <span className="flex items-center gap-1">
-                                <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Esc</kbd>
-                                to clear
+                                <kbd className="px-1 py-0.5 rounded border bg-background font-mono">ESC</kbd>
+                                CLEAR
                             </span>
                         </div>
 
-                        {/* Search Results Dropdown */}
+                        {/* Search Results Dropdown - Industrial/Clean Look */}
                         {(searchResults.length > 0 || (searchQuery.length >= 2 && !isSearching)) && (
-                            <div className="mt-4 border-2 rounded-xl bg-background shadow-lg overflow-hidden">
+                            <div className="mt-2 border rounded-md bg-background shadow-md overflow-hidden">
                                 {searchResults.length === 0 ? (
-                                    <div className="p-6 text-center text-muted-foreground">
+                                    <div className="p-4 text-center text-sm text-muted-foreground">
                                         <p>No students found for "{searchQuery}"</p>
                                     </div>
                                 ) : (
@@ -311,40 +308,41 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
                                             <div
                                                 key={result.student.id}
                                                 className={`
-                                                    p-4 cursor-pointer transition-colors flex items-center justify-between
+                                                    px-4 py-3 cursor-pointer transition-colors flex items-center justify-between
                                                     ${index === highlightedIndex
-                                                        ? "bg-primary/10 border-l-4 border-l-primary"
-                                                        : "hover:bg-muted/50 border-l-4 border-l-transparent"
+                                                        ? "bg-muted/50"
+                                                        : "hover:bg-muted/30"
                                                     }
-                                                    ${index !== searchResults.length - 1 ? "border-b" : ""}
+                                                    ${index !== searchResults.length - 1 ? "border-b border-border/50" : ""}
                                                 `}
                                                 onClick={() => handleSelectStudent(result)}
                                                 onMouseEnter={() => setHighlightedIndex(index)}
                                             >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                                                        <User className="h-5 w-5 text-muted-foreground" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-base">
-                                                            {result.student.firstName} {result.student.lastName}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {result.student.admissionNumber} • {result.student.className}
-                                                            {result.student.section ? ` - ${result.student.section}` : ""}
-                                                        </p>
-                                                    </div>
+                                                {/* Text Only - No Avatars */}
+                                                <div>
+                                                    <p className={`text-sm font-medium ${index === highlightedIndex ? "text-foreground" : "text-foreground/80"}`}>
+                                                        {result.student.firstName} {result.student.lastName}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5 font-sans">
+                                                        <span className="font-mono">{result.student.admissionNumber}</span> • {result.student.className}
+                                                        {result.student.section ? ` - ${result.student.section}` : ""}
+                                                    </p>
                                                 </div>
+
                                                 <div className="text-right shrink-0">
                                                     {result.feeAccount ? (
-                                                        <>
-                                                            <p className="font-semibold text-orange-600">
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-sm font-semibold tracking-tight">
                                                                 {formatCurrency(result.feeAccount.balance)}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">pending</p>
-                                                        </>
+                                                            </span>
+                                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                                                Pending
+                                                            </span>
+                                                        </div>
                                                     ) : (
-                                                        <span className="text-xs text-orange-600 font-medium">No fee account</span>
+                                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                                            No Account
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -430,155 +428,189 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
 
     // STUDENT FEE WALLET & PAYMENT VIEW (Student selected)
     return (
-        <div className="space-y-6">
+        <div className="max-w-3xl mx-auto space-y-8 pt-8">
             <HeaderUpdater
                 title="Collect Fee"
                 description="Record payment for selected student"
             />
 
-            {/* Back Button */}
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearStudent}
-                className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Search
-            </Button>
+            {/* Top Bar: Back & ID */}
+            <div className="flex items-center justify-between">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearStudent}
+                    className="gap-2 text-muted-foreground hover:text-foreground pl-0"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Search
+                </Button>
+                <div className="text-sm font-mono text-muted-foreground">
+                    ID: {selectedStudent.student.admissionNumber}
+                </div>
+            </div>
 
-            {/* Student Wallet Card */}
-            <Card className="border-2">
-                <CardContent className="p-6">
-                    <div className="flex items-start justify-between flex-wrap gap-4">
-                        {/* Student Info */}
-                        <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="h-8 w-8 text-primary" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-semibold">
-                                    {selectedStudent.student.firstName} {selectedStudent.student.lastName}
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    {selectedStudent.student.admissionNumber}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {selectedStudent.student.className}
-                                    {selectedStudent.student.section ? ` - ${selectedStudent.student.section}` : ""}
-                                    {" • "}{currentYear}
-                                </p>
-                            </div>
+            {/* Student Account Summary - Industrial Card */}
+            <div className="bg-background border rounded-lg shadow-sm overflow-hidden">
+                <div className="p-6 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-semibold tracking-tight">
+                            {selectedStudent.student.firstName} {selectedStudent.student.lastName}
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {selectedStudent.student.className}
+                            {selectedStudent.student.section ? ` - ${selectedStudent.student.section}` : ""}
+                            {" • "}{currentYear}
+                        </p>
+                    </div>
+                    {selectedStudent.feeAccount && (
+                        <StatusBadge status={selectedStudent.feeAccount.status} />
+                    )}
+                </div>
+
+                {/* Stats Row with Vertical Dividers */}
+                {selectedStudent.feeAccount ? (
+                    <div className="grid grid-cols-3 divide-x border-t bg-muted/20">
+                        <div className="p-4 text-center">
+                            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Total Fee</p>
+                            <p className="text-xl font-bold font-heading">
+                                {formatCurrency(selectedStudent.feeAccount.totalFee)}
+                            </p>
                         </div>
+                        <div className="p-4 text-center">
+                            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Paid</p>
+                            <p className="text-xl font-bold font-heading text-green-600">
+                                {formatCurrency(selectedStudent.feeAccount.totalPaid)}
+                            </p>
+                        </div>
+                        <div className="p-4 text-center">
+                            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Balance</p>
+                            <p className="text-xl font-bold font-heading text-orange-600">
+                                {formatCurrency(selectedStudent.feeAccount.balance)}
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="p-4 border-t bg-orange-50 text-orange-600 flex items-center justify-center gap-2 text-sm">
+                        <AlertCircle className="h-4 w-4" />
+                        No fee account found
+                    </div>
+                )}
+            </div>
 
-                        {/* Fee Status Badge */}
-                        {selectedStudent.feeAccount && (
-                            <StatusBadge status={selectedStudent.feeAccount.status} />
-                        )}
+            {/* Payment Form - Clean & Structural */}
+            {selectedStudent.feeAccount && (
+                <div className="border rounded-lg bg-background shadow-sm">
+                    <div className="p-6 border-b">
+                        <h3 className="font-semibold flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-muted-foreground" />
+                            Payment Details
+                        </h3>
                     </div>
 
-                    {/* Fee Wallet Summary */}
-                    {selectedStudent.feeAccount ? (
-                        <div className="mt-6 grid grid-cols-3 gap-4">
-                            <div className="p-4 rounded-xl bg-muted/50 text-center">
-                                <p className="text-sm text-muted-foreground mb-1">Total Fee</p>
-                                <p className="text-2xl font-bold">
-                                    {formatCurrency(selectedStudent.feeAccount.totalFee)}
-                                </p>
-                            </div>
-                            <div className="p-4 rounded-xl bg-green-500/10 text-center">
-                                <p className="text-sm text-muted-foreground mb-1">Paid</p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {formatCurrency(selectedStudent.feeAccount.totalPaid)}
-                                </p>
-                            </div>
-                            <div className="p-4 rounded-xl bg-orange-500/10 text-center">
-                                <p className="text-sm text-muted-foreground mb-1">Balance Due</p>
-                                <p className="text-2xl font-bold text-orange-600">
-                                    {formatCurrency(selectedStudent.feeAccount.balance)}
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="mt-6 p-4 rounded-xl bg-orange-500/10 text-orange-600 flex items-center gap-3">
-                            <AlertCircle className="h-5 w-5 shrink-0" />
-                            <p>No fee account found. Please set up fee structure first.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Payment Form */}
-            {selectedStudent.feeAccount && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Wallet className="h-5 w-5" />
-                            Payment Details
-                        </CardTitle>
-                        <CardDescription>
-                            Enter the payment information to collect fee
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Amount */}
-                        <div>
-                            <Label className="text-base">Amount (₹) *</Label>
-                            <div className="relative mt-2">
-                                <IndianRupee className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    type="number"
-                                    placeholder="Enter amount"
-                                    className="h-12 pl-10 text-xl font-semibold"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                />
-                            </div>
-                            <div className="mt-3 flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setAmount(selectedStudent.feeAccount!.balance)}
-                                >
-                                    Full Balance
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        const half = parseFloat(selectedStudent.feeAccount!.balance) / 2;
-                                        setAmount(half.toFixed(2));
-                                    }}
-                                >
-                                    Half
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        const quarter = parseFloat(selectedStudent.feeAccount!.balance) / 4;
-                                        setAmount(quarter.toFixed(2));
-                                    }}
-                                >
-                                    Quarter
-                                </Button>
+                    <div className="p-6 space-y-6">
+                        {/* Amount Section */}
+                        <div className="space-y-3">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Amount (₹)</Label>
+                            <div className="flex gap-4">
+                                <div className="relative flex-1">
+                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        type="number"
+                                        placeholder="0.00"
+                                        className="h-10 pl-9 font-mono text-lg"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex gap-2 shrink-0">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="font-mono text-xs"
+                                        onClick={() => setAmount(selectedStudent.feeAccount!.balance)}
+                                    >
+                                        Full
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="font-mono text-xs"
+                                        onClick={() => {
+                                            const half = parseFloat(selectedStudent.feeAccount!.balance) / 2;
+                                            setAmount(half.toFixed(2));
+                                        }}
+                                    >
+                                        50%
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="font-mono text-xs"
+                                        onClick={() => {
+                                            const quarter = parseFloat(selectedStudent.feeAccount!.balance) / 4;
+                                            setAmount(quarter.toFixed(2));
+                                        }}
+                                    >
+                                        25%
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Months */}
-                        <div>
-                            <Label className="text-base">Months Covered (Optional)</Label>
-                            <div className="grid grid-cols-6 gap-2 mt-2">
+                        {/* Grid: Payment Mode & For */}
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Payment Mode</Label>
+                                <Select
+                                    value={paymentMode}
+                                    onValueChange={(v) => setPaymentMode(v as typeof paymentMode)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cash">Cash</SelectItem>
+                                        <SelectItem value="upi">UPI</SelectItem>
+                                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                        <SelectItem value="cheque">Cheque</SelectItem>
+                                        <SelectItem value="online">Online</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
+                                <Select value={paymentFor} onValueChange={setPaymentFor}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="monthly">Monthly Fee</SelectItem>
+                                        <SelectItem value="quarterly">Quarterly Fee</SelectItem>
+                                        <SelectItem value="half_yearly">Half-Yearly Fee</SelectItem>
+                                        <SelectItem value="annual">Annual Fee</SelectItem>
+                                        <SelectItem value="exam_fee">Exam Fee</SelectItem>
+                                        <SelectItem value="transport">Transport Fee</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Months Grid - Cleaner */}
+                        <div className="space-y-3">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Months Covered</Label>
+                            <div className="grid grid-cols-6 gap-2">
                                 {MONTHS.map((month) => (
                                     <button
                                         key={month}
                                         type="button"
                                         onClick={() => toggleMonth(month)}
                                         className={`
-                                            py-2 rounded-lg border text-sm font-medium transition-all
+                                            h-9 rounded border text-xs font-medium transition-all
                                             ${paidMonths.includes(month)
-                                                ? "bg-primary text-primary-foreground border-primary"
-                                                : "bg-background hover:bg-muted border-border text-muted-foreground"
+                                                ? "bg-foreground text-background border-foreground"
+                                                : "bg-background hover:bg-muted border-input text-muted-foreground"
                                             }
                                         `}
                                     >
@@ -588,51 +620,12 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
                             </div>
                         </div>
 
-                        {/* Payment Mode */}
-                        <div>
-                            <Label className="text-base">Payment Mode *</Label>
-                            <Select
-                                value={paymentMode}
-                                onValueChange={(v) => setPaymentMode(v as typeof paymentMode)}
-                            >
-                                <SelectTrigger className="mt-2 h-11">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="cash">Cash</SelectItem>
-                                    <SelectItem value="upi">UPI</SelectItem>
-                                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                    <SelectItem value="cheque">Cheque</SelectItem>
-                                    <SelectItem value="online">Online</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Payment For */}
-                        <div>
-                            <Label className="text-base">Payment For (Optional)</Label>
-                            <Select value={paymentFor} onValueChange={setPaymentFor}>
-                                <SelectTrigger className="mt-2 h-11">
-                                    <SelectValue placeholder="Select category..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="monthly">Monthly Fee</SelectItem>
-                                    <SelectItem value="quarterly">Quarterly Fee</SelectItem>
-                                    <SelectItem value="half_yearly">Half-Yearly Fee</SelectItem>
-                                    <SelectItem value="annual">Annual Fee</SelectItem>
-                                    <SelectItem value="exam_fee">Exam Fee</SelectItem>
-                                    <SelectItem value="transport">Transport Fee</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
                         {/* Remarks */}
-                        <div>
-                            <Label className="text-base">Remarks (Optional)</Label>
-                            <Textarea
-                                placeholder="Add any notes..."
-                                className="mt-2"
+                        <div className="space-y-2">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Remarks</Label>
+                            <Input
+                                placeholder="Optional notes..."
+                                className="h-9"
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
                             />
@@ -640,24 +633,24 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
 
                         {/* Submit Button */}
                         <Button
-                            className="w-full h-12 text-base"
+                            className="w-full h-11 text-sm font-medium tracking-wide"
                             onClick={handleCollectFee}
                             disabled={!amount || isCollecting}
                         >
                             {isCollecting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Processing...
                                 </>
                             ) : (
                                 <>
-                                    <CheckCircle className="mr-2 h-5 w-5" />
-                                    Collect {amount ? formatCurrency(amount) : "Fee"}
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Collect Payment
                                 </>
                             )}
                         </Button>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             )}
 
             {/* Success Dialog */}
@@ -678,13 +671,13 @@ export function CollectFeeClient({ currentYear, preSelectedStudent }: CollectFee
                             <div className="grid grid-cols-2 gap-4 text-center">
                                 <div>
                                     <p className="text-sm text-muted-foreground">Amount Paid</p>
-                                    <p className="font-semibold text-lg text-green-600">
+                                    <p className="font-heading font-bold text-lg text-green-600">
                                         {formatCurrency(lastReceipt.amount)}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">New Balance</p>
-                                    <p className="font-semibold text-lg">
+                                    <p className="font-heading font-bold text-lg">
                                         {formatCurrency(lastReceipt.newBalance)}
                                     </p>
                                 </div>

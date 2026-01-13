@@ -93,36 +93,61 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Responsive font scaling */
-  @media (min-width: 768px) {
-    html {
-      font-size: 15px;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    html {
-      font-size: 16px;
-    }
-  }
-
-  /* Emulate 110% Zoom for larger screens (e.g. 24", 27" monitors) */
-  @media (min-width: 1536px) {
-    html {
-      font-size: 17.6px;
-      /* 16px * 1.1 */
-    }
-  }
-
-  @media (min-width: 1920px) {
-    html {
-      font-size: 18px;
-    }
-  }
-
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Financials & IDs Typography Utility Classes */
+@layer components {
+
+  .amount,
+  .stat-value {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  .receipt-id,
+  .txn-id {
+    font-family: var(--font-jetbrains-mono), monospace;
+  }
+}
+
+/* Responsive font scaling */
+@media (min-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1280px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Emulate slight zoom for larger screens (e.g. 24", 27" monitors) */
+@media (min-width: 1536px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1920px) {
+  html {
+    font-size: 16px;
   }
 }
 
@@ -147,6 +172,7 @@
 
 /* Print Styles for Fee Receipts */
 @media print {
+
   /* Hide everything by default */
   body * {
     visibility: hidden;

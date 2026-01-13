@@ -98,15 +98,16 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
             { title: "Students", url: "/operations/students", icon: Users },
             { title: "Teachers", url: "/operations/teachers", icon: GraduationCap },
             { title: "Admissions", url: "/operations/admissions", icon: UserPlus },
-            {
-                title: "Fees",
-                icon: Receipt,
-                subItems: [
-                    { title: "Overview", url: "/operations/fees", icon: Eye },
-                    { title: "Collect Fees", url: "/operations/fees/collect", icon: CreditCard },
-                    { title: "Transactions", url: "/operations/fees/transactions", icon: History },
-                ],
-            },
+        ] as NavItem[],
+    };
+
+    const feesNav = {
+        label: "Fees",
+        checkAccess: canAccessOperations, // Inherit usage permission
+        items: [
+            { title: "Overview", url: "/operations/fees", icon: Eye },
+            { title: "Collect Fees", url: "/operations/fees/collect", icon: CreditCard },
+            { title: "Transactions", url: "/operations/fees/transactions", icon: History },
         ] as NavItem[],
     };
 
@@ -143,6 +144,8 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
 
     if (canAccessOperations(userRole)) {
         groups.push(operationsNav);
+        // Fees is part of operations technically, but shown visually separate
+        groups.push(feesNav);
     }
 
     if (canAccessAcademics(userRole)) {
@@ -209,7 +212,12 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                                     <CollapsibleContent>
                                                         <SidebarMenuSub>
                                                             {item.subItems.map((subItem) => {
-                                                                const isActive = pathname === subItem.url || pathname.startsWith(subItem.url + "/");
+                                                                // Use most specific match to avoid prefix collisions (e.g., /fees vs /fees/collect)
+                                                                const isBetterMatch = item.subItems.some(
+                                                                    (other) => other !== subItem && other.url.length > subItem.url.length && (pathname === other.url || pathname.startsWith(other.url + "/"))
+                                                                );
+                                                                const isActive = (pathname === subItem.url || pathname.startsWith(subItem.url + "/")) && !isBetterMatch;
+
                                                                 return (
                                                                     <SidebarMenuSubItem key={subItem.title}>
                                                                         <SidebarMenuSubButton
@@ -232,7 +240,12 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                     }
 
                                     // Regular menu item
-                                    const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
+                                    // Use most specific match logic to avoid prefix collisions (especially for Fees Overview)
+                                    const isBetterMatch = group.items.some(
+                                        (other) => !hasSubItems(other) && other !== item && other.url.length > item.url.length && (pathname === other.url || pathname.startsWith(other.url + "/"))
+                                    );
+                                    const isActive = (pathname === item.url || pathname.startsWith(item.url + "/")) && !isBetterMatch;
+
                                     return (
                                         <SidebarMenuItem key={item.title}>
                                             <SidebarMenuButton
